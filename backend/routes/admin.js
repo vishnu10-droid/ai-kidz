@@ -1,8 +1,31 @@
 const router = require("express").Router();
 const { requireAuth, authorizeRoles } = require("../middleware/auth");
 const controller = require("../controller/adminController");
+
 router.use(requireAuth, authorizeRoles("admin"));
-router.get("/kpis", controller.kpis);
+
+router.get("/overview", controller.overview);
+
 router.get("/users", controller.listUsers);
-router.patch("/users/:id/roles", controller.updateUserRoles);
+router.patch("/users/:id", controller.updateUser);
+router.delete("/users/:id", controller.deleteUser);
+
+router.get("/schools", controller.listSchools);
+router.post("/schools", controller.createSchool);
+router.patch("/schools/:id", controller.updateSchool);
+router.delete("/schools/:id", controller.deleteSchool);
+
+router.get("/franchises", controller.listFranchises);
+router.post("/franchises", controller.createFranchise);
+router.patch("/franchises/:id", controller.updateFranchise);
+router.delete("/franchises/:id", controller.deleteFranchise);
+
+router.get("/orders", controller.listOrders);
+router.patch("/orders/:id", controller.updateOrder);
+
+router.get("/enquiries", controller.listEnquiries);
+router.patch("/enquiries/:id", controller.updateEnquiry);
+
+router.post("/notifications", controller.broadcast);
+
 module.exports = router;

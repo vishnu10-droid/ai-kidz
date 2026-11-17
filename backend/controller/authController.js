@@ -27,6 +27,7 @@ exports.login = async (req, res, next) => {
   try {
     const user = await User.findOne({ email: req.body.email?.toLowerCase() }).select("+password");
     if (!user || !(await bcrypt.compare(req.body.password || "", user.password))) return res.status(401).json({ message: "Invalid email or password" });
+    if (user.is_active === false) return res.status(403).json({ message: "This account has been deactivated. Contact an AIKIDZ admin." });
     return res.json({ token: tokenFor(user), user: userResponse(user) });
   } catch (error) { return next(error); }
 };

@@ -1,4 +1,4 @@
-const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:5000/api").replace(/\/$/, "");
+const API_URL = (import.meta.env["VITE_API_URL"] || "http://localhost:5000/api").replace(/\/$/, "");
 const TOKEN_KEY = "aikidz-token";
 
 export type ApiUser = {
@@ -28,9 +28,15 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 
 export async function login(email: string, password: string) {
-  return api<{ token: string; user: ApiUser }>("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) });
+  return api<{ token: string; user: ApiUser }>("/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
 }
 
 export async function register(payload: Record<string, unknown>) {
-  return api<{ token: string; user: ApiUser }>("/auth/register", { method: "POST", body: JSON.stringify(payload) });
+  return api<{ token: string; user: ApiUser }>("/auth/register", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }

@@ -36,7 +36,12 @@ app.use("/api/school", organization.school);
 app.use("/api/franchise", organization.franchise);
 app.use("/api/teacher", require("./routes/teacher"));
 app.use("/api/student", require("./routes/student"));
+app.use("/api/parent", require("./routes/parent"));
 app.use("/api/admin", require("./routes/admin"));
+app.use("/api/orders", require("./routes/orders"));
+app.use("/api/enquiries", require("./routes/enquiries"));
+app.use("/api/certificates", require("./routes/certificates"));
+app.use("/api/notifications", require("./routes/notifications"));
 
 app.use((_req, res) => {
   res.status(404).json({ message: "Route not found" });
@@ -47,6 +52,10 @@ app.use((error, _req, res, _next) => {
 
   if (error.name === "ValidationError") {
     return res.status(400).json({ message: error.message });
+  }
+
+  if (error.name === "CastError") {
+    return res.status(400).json({ message: "That record id isn't valid" });
   }
 
   if (error.code === 11000) {

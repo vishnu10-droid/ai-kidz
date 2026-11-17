@@ -10,7 +10,8 @@ export function Logo({ className, light = false }: { className?: string; light?:
           light ? "text-navy-foreground" : "text-foreground",
         )}
       >
-        AI<span className="text-gradient-brand">KIDZ</span>
+        AI
+        <span className={light ? "text-gradient-hero" : "text-gradient-brand"}>KIDZ</span>
       </span>
     </Link>
   );

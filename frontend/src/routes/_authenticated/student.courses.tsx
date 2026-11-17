@@ -1,56 +1,91 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { BookOpen, PlayCircle } from "lucide-react";
-import { DashboardShell, Empty, Panel, ProgressBar, StatCard } from "@/components/dash/DashboardShell";
+import { useQuery } from "@tanstack/react-query";
+import { BookOpen, CheckCircle2, PlayCircle } from "lucide-react";
+import { DashboardShell, ProgressBar } from "@/components/dash/DashboardShell";
+import { EmptyState, ErrorNote, LoadingGrid } from "@/components/dash/DashSections";
 import { Button } from "@/components/ui/button";
-import { studentHomeQuery } from "@/lib/student.queries";
+import { dashQuery } from "@/lib/dash.api";
+import type { EnrollmentRow } from "@/lib/dash.api";
 import { pageMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/_authenticated/student/courses")({
-  head: () => ({ meta: [...pageMeta("My Courses", "Every course you are learning at AIKIDZ."), { name: "robots", content: "noindex" }] }),
-  loader: ({ context }) => context.queryClient.ensureQueryData(studentHomeQuery(context.userId)),
-  component: MyCourses,
+  head: () => ({
+    meta: [
+      ...pageMeta("My Courses", "Every AIKIDZ course you are enrolled in."),
+      { name: "robots", content: "noindex" },
+    ],
+  }),
+  component: StudentCourses,
 });
 
-function MyCourses() {
-  const { userId } = Route.useRouteContext();
-  const { data } = useSuspenseQuery(studentHomeQuery(userId));
-  const running = data.enrollments.filter((e) => e.progress < 100);
-  const finished = data.enrollments.filter((e) => e.progress >= 100);
+function StudentCourses() {
+  const courses = useQuery(
+    dashQuery<EnrollmentRow[]>(["student", "courses"], "/api/student/courses"),
+  );
 
   return (
-    <DashboardShell role="student" title="My courses" subtitle="Pick up where you left off." actions={<Button asChild variant="brand"><Link to="/programs">Browse more courses</Link></Button>}>
-      <div className="mb-6 grid gap-4 sm:grid-cols-3">
-        <StatCard label="Enrolled" value={data.enrollments.length} icon={BookOpen} />
-        <StatCard label="In progress" value={running.length} icon={PlayCircle} tone="sun" />
-        <StatCard label="Completed" value={finished.length} icon={BookOpen} tone="mint" />
-      </div>
-
-      {data.enrollments.length === 0 ? (
-        <Empty>You're not enrolled in a course yet. <Link to="/programs" className="font-semibold text-primary">Browse programs</Link> or <Link to="/book-free-trial" className="font-semibold text-primary">book a free trial</Link>.</Empty>
+    <DashboardShell
+      role="student"
+      title="My courses"
+      subtitle="Pick up where you left off — every course tracks your lesson progress."
+    >
+      {courses.isLoading ? (
+        <LoadingGrid rows={1} />
+      ) : courses.isError ? (
+        <ErrorNote message="Could not load your courses. Please refresh." />
+      ) : (courses.data ?? []).length === 0 ? (
+        <EmptyState>
+          You're not enrolled in any course yet. Ask your teacher or school to enrol you.
+        </EmptyState>
       ) : (
-        <Panel title="Your courses">
-          <ul className="grid gap-4 md:grid-cols-2">
-            {data.enrollments.map((e) => {
-              const course = e.courses;
-              if (!course) return null;
-              return (
-                <li key={e.id} className="flex flex-col overflow-hidden rounded-2xl border bg-card">
-                  <img src={course.image_url ?? ""} alt="" className="h-36 w-full object-cover" />
-                  <div className="flex flex-1 flex-col p-4">
-                    <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{course.level}</div>
-                    <div className="mt-1 font-bold">{course.title}</div>
-                    <div className="mt-3 flex items-center gap-3"><ProgressBar value={e.progress} /><span className="text-xs font-semibold">{e.progress}%</span></div>
-                    <div className="mt-4 flex gap-2">
-                      <Button asChild size="sm" variant="brand"><Link to="/student/learn/$slug" params={{ slug: course.slug }}><PlayCircle /> {e.progress ? "Resume" : "Start"}</Link></Button>
-                      <Button asChild size="sm" variant="outline"><Link to="/courses/$slug" params={{ slug: course.slug }}>Details</Link></Button>
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </Panel>
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          {(courses.data ?? []).map((row) => (
+            <div
+              key={row.enrollmentId}
+              className="glass-panel flex flex-col rounded-3xl border p-5"
+            >
+              <div className="flex items-start gap-3">
+                <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-gradient-brand text-primary-foreground">
+                  <BookOpen className="size-5" />
+                </span>
+                <div className="min-w-0">
+                  <p className="font-display text-lg font-bold leading-tight">{row.course.title}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {row.course.level ?? "All levels"} · {row.course.duration ?? "Self paced"}
+                  </p>
+                </div>
+              </div>
+
+              <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">
+                {row.course.short_description ?? ""}
+              </p>
+
+              <div className="mt-4">
+                <div className="mb-1 flex items-center justify-between text-xs font-semibold">
+                  <span className="text-muted-foreground">
+                    {row.completedLessons}/{row.totalLessons} lessons
+                  </span>
+                  <span className="tabular-nums">{row.progress}%</span>
+                </div>
+                <ProgressBar value={row.progress} />
+              </div>
+
+              <div className="mt-5 flex items-center gap-2">
+                <Button asChild variant="brand" size="sm" className="rounded-full">
+                  <Link to="/student/learn/$slug" params={{ slug: row.course.slug }}>
+                    <PlayCircle className="size-4" />{" "}
+                    {row.progress > 0 ? "Resume" : "Start learning"}
+                  </Link>
+                </Button>
+                {row.progress >= 100 ? (
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-mint">
+                    <CheckCircle2 className="size-4" /> Completed
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          ))}
+        </div>
       )}
     </DashboardShell>
   );

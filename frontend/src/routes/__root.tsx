@@ -126,7 +126,7 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 // Dashboard areas render their own app shell instead of the marketing header/footer.
-const APP_AREA = /^\/(student|teacher|parent|admin|franchise)\/|^\/school\/.+/;
+const APP_AREA = /^\/(student|teacher|parent|admin|franchise)(\/|$)|^\/school\/.+/;
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();

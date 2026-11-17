@@ -13,9 +13,16 @@ const AMBER: [number, number, number] = [245, 158, 11];
 const NAVY: [number, number, number] = [16, 24, 40];
 const SLATE: [number, number, number] = [100, 116, 139];
 
-const longDate = (v: string | Date) => new Date(v).toLocaleDateString("en-IN", { dateStyle: "long" });
+const longDate = (v: string | Date) =>
+  new Date(v).toLocaleDateString("en-IN", { dateStyle: "long" });
 
-export async function downloadCertificatePdf(c: { studentName: string; courseTitle: string; code: string; issuedAt: string; verifyUrl: string }) {
+export async function downloadCertificatePdf(c: {
+  studentName: string;
+  courseTitle: string;
+  code: string;
+  issuedAt: string;
+  verifyUrl: string;
+}) {
   const doc = await newDoc("landscape");
   const W = 297;
   const H = 210;
@@ -73,9 +80,9 @@ export async function downloadReceiptPdf(r: {
   description: string;
   amount: number | string;
   status: string;
-  method?: string | null;
-  paidAt?: string | null;
-  dueDate?: string | null;
+  method?: string | null | undefined;
+  paidAt?: string | null | undefined;
+  dueDate?: string | null | undefined;
   createdAt: string;
 }) {
   const doc = await newDoc("portrait");
@@ -101,7 +108,9 @@ export async function downloadReceiptPdf(r: {
     ...(r.dueDate ? ([["Due date", longDate(r.dueDate)]] as [string, string][]) : []),
     ["Status", paid ? "Paid" : r.status === "pending" ? "Unpaid" : r.status],
     ...(paid && r.paidAt ? ([["Paid on", longDate(r.paidAt)]] as [string, string][]) : []),
-    ...(paid && r.method ? ([["Payment method", r.method.replace(/_/g, " ").toUpperCase()]] as [string, string][]) : []),
+    ...(paid && r.method
+      ? ([["Payment method", r.method.replace(/_/g, " ").toUpperCase()]] as [string, string][])
+      : []),
   ];
   let y = 52;
   for (const [k, v] of rows) {
@@ -136,6 +145,8 @@ export async function downloadReceiptPdf(r: {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.setTextColor(...SLATE);
-  doc.text("This is a computer-generated document and does not need a signature.", W / 2, 280, { align: "center" });
+  doc.text("This is a computer-generated document and does not need a signature.", W / 2, 280, {
+    align: "center",
+  });
   doc.save(`AIKIDZ-${paid ? "receipt" : "invoice"}-${r.receiptNumber}.pdf`);
 }
