@@ -26,7 +26,9 @@ app.use("/api/catalog", require("./routes/catalog"));
 const catalogController = require("./controller/catalogController");
 
 app.get("/api/courses", catalogController.listCourses);
+app.get("/api/courses/:slug", catalogController.getCourse);
 app.get("/api/products", catalogController.listProducts);
+app.get("/api/products/:slug", catalogController.getProduct);
 
 const organization = require("./routes/organization");
 

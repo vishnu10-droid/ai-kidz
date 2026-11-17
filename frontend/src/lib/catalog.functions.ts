@@ -1,108 +1,117 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import type { Database } from "@/integrations/supabase/types";
 
-// Public catalogue reads (products, courses) using the publishable key; RLS allows anon SELECT on these tables.
-function publicClient() {
-  const url = process.env["SUPABASE_URL"]!;
-  const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
-  return createClient<Database>(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false, storage: undefined },
-    global: {
-      fetch: (input, init) => {
-        const h = new Headers(init?.headers);
-        if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`)
-          h.delete("Authorization");
-        h.set("apikey", key);
-        return fetch(input, { ...init, headers: h });
-      },
-    },
+/**
+ * Public catalogue reads, served by the AIKIDZ Express API.
+ * Server-side requests use API_URL (see frontend/.env); VITE_API_URL is the
+ * fallback for local development.
+ */
+const API_BASE = (
+  process.env["API_URL"] ||
+  process.env["VITE_API_URL"] ||
+  "http://localhost:5000/api"
+).replace(/\/$/, "");
+
+async function apiGet<T>(path: string): Promise<T> {
+  const response = await fetch(`${API_BASE}${path}`, {
+    headers: { accept: "application/json" },
   });
+  if (!response.ok) throw new Error(`Catalog request failed (${response.status}) for ${path}`);
+  return (await response.json()) as T;
 }
 
-const PRODUCT_FIELDS =
-  "id, slug, name, short_description, price, mrp, rating, reviews_count, age_group, image_url, is_featured, created_at, product_categories(name, slug)";
+export type CatalogCategory = { name: string; slug: string };
+
+export type CatalogProduct = {
+  id: string;
+  slug: string;
+  name: string;
+  short_description: string | null;
+  price: number;
+  mrp: number;
+  rating: number;
+  reviews_count: number;
+  age_group: string | null;
+  image_url: string | null;
+  is_featured: boolean;
+  created_at: string;
+  product_categories: CatalogCategory | null;
+};
+
+export type CatalogProductDetail = CatalogProduct & {
+  description: string | null;
+  specifications: Record<string, string>;
+  box_contents: string[];
+  product_images: { url: string; position: number }[];
+  inventory: { stock: number };
+};
+
+export type CatalogCourse = {
+  id: string;
+  slug: string;
+  title: string;
+  short_description: string | null;
+  image_url: string | null;
+  age_group: string | null;
+  duration: string | null;
+  level: string;
+  price: number;
+  course_categories: CatalogCategory | null;
+};
+
+export type CatalogCourseDetail = CatalogCourse & {
+  description: string | null;
+  course_modules: {
+    id: string;
+    title: string;
+    position: number;
+    lessons: { id: string; title: string; duration_minutes: number | null; position: number }[];
+  }[];
+};
 
 export const listProducts = createServerFn({ method: "GET" }).handler(async () => {
-  const { data, error } = await publicClient()
-    .from("products")
-    .select(PRODUCT_FIELDS)
-    .eq("is_active", true)
-    .order("created_at");
-  if (error) {
-    console.error(error);
+  try {
+    const data = await apiGet<{ products: CatalogProduct[]; categories: CatalogCategory[] }>("/products");
+    return { products: data.products ?? [], categories: data.categories ?? [] };
+  } catch (error) {
+    console.error("[catalog] listProducts:", error);
     return { products: [], categories: [] };
   }
-  const { data: categories } = await publicClient()
-    .from("product_categories")
-    .select("name, slug")
-    .order("position");
-  return { products: data ?? [], categories: categories ?? [] };
 });
 
 export const getProduct = createServerFn({ method: "GET" })
   .validator((d) => z.object({ slug: z.string().min(1).max(120) }).parse(d))
   .handler(async ({ data }) => {
-    const db = publicClient();
-    const { data: product } = await db
-      .from("products")
-      .select(
-        `${PRODUCT_FIELDS}, description, specifications, box_contents, category_id, product_images(url, position), inventory(stock)`,
-      )
-      .eq("slug", data.slug)
-      .eq("is_active", true)
-      .maybeSingle();
-    if (!product) return { product: null, related: [] };
-    const { data: related } = await db
-      .from("products")
-      .select(PRODUCT_FIELDS)
-      .eq("is_active", true)
-      .neq("id", product.id)
-      .eq("category_id", product.category_id ?? "")
-      .limit(4);
-    let rel = related ?? [];
-    if (rel.length < 4) {
-      const { data: more } = await db
-        .from("products")
-        .select(PRODUCT_FIELDS)
-        .eq("is_active", true)
-        .neq("id", product.id)
-        .eq("is_featured", true)
-        .limit(4);
-      rel = [...rel, ...(more ?? []).filter((m) => !rel.some((r) => r.id === m.id))].slice(0, 4);
+    try {
+      const result = await apiGet<{ product: CatalogProductDetail | null; related: CatalogProduct[] }>(
+        `/products/${encodeURIComponent(data.slug)}`,
+      );
+      return { product: result.product ?? null, related: result.related ?? [] };
+    } catch (error) {
+      console.error("[catalog] getProduct:", error);
+      return { product: null, related: [] };
     }
-    return { product, related: rel };
   });
-
-const COURSE_BASE =
-  "id, slug, title, short_description, image_url, age_group, duration, level, price";
-const COURSE_FIELDS = `${COURSE_BASE}, course_categories(name, slug)`;
 
 export const listCourses = createServerFn({ method: "GET" })
   .validator((d) => z.object({ category: z.string().max(60).optional() }).parse(d ?? {}))
   .handler(async ({ data }) => {
-    let q = publicClient()
-      .from("courses")
-      .select(`${COURSE_BASE}, course_categories!inner(name, slug)`)
-      .eq("is_published", true)
-      .order("price");
-    if (data.category) q = q.eq("course_categories.slug", data.category);
-    const { data: courses, error } = await q;
-    if (error) console.error(error);
-    return courses ?? [];
+    try {
+      const query = data.category ? `?category=${encodeURIComponent(data.category)}` : "";
+      return await apiGet<CatalogCourse[]>(`/courses${query}`);
+    } catch (error) {
+      console.error("[catalog] listCourses:", error);
+      return [] as CatalogCourse[];
+    }
   });
 
 export const getCourse = createServerFn({ method: "GET" })
   .validator((d) => z.object({ slug: z.string().min(1).max(120) }).parse(d))
   .handler(async ({ data }) => {
-    const { data: course } = await publicClient()
-      .from("courses")
-      .select(
-        `${COURSE_FIELDS}, description, course_modules(id, title, position, lessons(id, title, duration_minutes, position))`,
-      )
-      .eq("slug", data.slug)
-      .eq("is_published", true)
-      .maybeSingle();
-    return course ?? null;
+    try {
+      return await apiGet<CatalogCourseDetail>(`/courses/${encodeURIComponent(data.slug)}`);
+    } catch (error) {
+      console.error("[catalog] getCourse:", error);
+      return null;
+    }
   });
