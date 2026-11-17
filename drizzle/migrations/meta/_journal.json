@@ -1,0 +1,55 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1794657780701,
+      "tag": "0000_learningbix_core_schema_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1794657862604,
+      "tag": "0001_learningbix_core_policies_and_functions",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794657935744,
+      "tag": "0002_learningbix_seed_catalog",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794657958833,
+      "tag": "0003_media_bucket_policies",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794657970447,
+      "tag": "0004_org_self_signup_and_course_payments",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794658954675,
+      "tag": "0005_active_org_signup_fees_attendance_live_notifications",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794807687856,
+      "tag": "0006_teacher_logins_and_aikidz_rename",
+      "breakpoints": true
+    }
+  ]
+}
