@@ -170,7 +170,7 @@ export function StudentOverview({
     },
   ];
   return (
-    <section className="space-y-3 sm:space-y-4">
+    <section className="space-y-4 sm:space-y-5">
       <div className="grid gap-3 xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,0.9fr)]">
         <article className="glass-panel glass-highlight overflow-hidden rounded-3xl border p-4 shadow-soft sm:p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">

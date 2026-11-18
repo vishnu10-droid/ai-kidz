@@ -642,7 +642,7 @@ async function seed() {
   });
   await QuizSubmission.create({ student_id: mainStudent._id, quiz_id: quiz._id, answers: [1, 1, 2, 2], score: 75, passed: true });
 
-  // A live class tomorrow so the student hub shows the "LIVE" schedule.
+  // Upcoming live classes so the student hub shows the "LIVE" schedule.
   await LiveSession.create({
     title: "Sensors & Actuators Deep Dive",
     batchId: roboticsBatch._id,
@@ -651,6 +651,16 @@ async function seed() {
     startTime: at(1, 10),
     endTime: at(1, 11),
     topic: "How IR and ultrasonic sensors talk to motors",
+    status: "upcoming",
+  });
+  await LiveSession.create({
+    title: "Line Following Robot Workshop",
+    batchId: roboticsBatch._id,
+    teacherId: teacherUser._id,
+    meetingUrl: "https://meet.google.com/aikidz-line-follower",
+    startTime: at(2, 16),
+    endTime: at(2, 17),
+    topic: "Calibrate the IR array and tune your PID values live",
     status: "upcoming",
   });
 

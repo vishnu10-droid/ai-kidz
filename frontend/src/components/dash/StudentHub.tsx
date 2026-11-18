@@ -7,25 +7,18 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
-  Clock,
   Copy,
   Download,
-  ExternalLink,
-  Flame,
-  GraduationCap,
   Loader2,
-  PlayCircle,
   RefreshCw,
   Send,
   Sparkles,
-  Star,
   Trophy,
   Wrench,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/lib/auth";
 import {
   dashQuery,
@@ -36,15 +29,14 @@ import {
   type DiyGuideRow,
   type Gamification,
   type LiveClassesResponse,
-  type LiveSessionRow,
   type StudentProfile,
 } from "@/lib/dash.api";
 import { downloadCertificatePdf } from "@/lib/pdf";
-import { useDashTab } from "@/lib/useDashTab";
 import { cn } from "@/lib/utils";
-import { DashboardShell, Empty, Panel, ProgressBar, StatCard } from "./DashboardShell";
+import { DashboardShell, Empty, Panel, ProgressBar } from "./DashboardShell";
 import { FormDialog } from "./DashKit";
-import { EmptyState, ErrorNote, LoadingGrid, TabsNav } from "./DashSections";
+import { EmptyState, ErrorNote, LoadingGrid } from "./DashSections";
+import { LiveClassCard } from "./StudentLive";
 import { StudentOverview } from "./StudentOverview";
 
 type BadgeCatalogEntry = {
@@ -102,124 +94,7 @@ const DIFFICULTY_TONE: Record<DiyGuideRow["difficulty"], string> = {
 const errorMessage = (error: unknown) =>
   error instanceof Error ? error.message : "Something went wrong";
 
-const initialsOf = (name: string) =>
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("") || "AI";
-
-const timeRange = (session: LiveSessionRow) => {
-  if (!session.startTime) return "Schedule to be confirmed";
-  const start = new Date(session.startTime);
-  const end = session.endTime ? new Date(session.endTime) : null;
-  const startLabel = start.toLocaleString("en-IN", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-  if (!end) return startLabel;
-  const endLabel = end.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" });
-  return `${startLabel} – ${endLabel}`;
-};
-
-function HeroBanner({
-  name,
-  gamification,
-  resume,
-}: {
-  name: string;
-  gamification: Gamification;
-  resume: ContinueLessonRow;
-}) {
-  return (
-    <section className="glass-panel glass-highlight relative overflow-hidden rounded-3xl border p-5 sm:p-7">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-24 -top-24 size-64 rounded-full bg-primary/20 blur-3xl"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -bottom-28 left-1/3 size-56 rounded-full bg-sun/20 blur-3xl"
-      />
-
-      <div className="relative flex flex-wrap items-center gap-5">
-        <span className="grid size-20 shrink-0 place-items-center rounded-3xl bg-gradient-brand font-display text-2xl font-extrabold text-primary-foreground shadow-soft">
-          {initialsOf(name)}
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-            Robotics &amp; AI learning hub
-          </p>
-          <h2 className="mt-1 font-display text-2xl font-extrabold sm:text-3xl">{name}</h2>
-          <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-gradient-brand px-3 py-1 text-xs font-bold text-primary-foreground shadow-soft">
-            ⚡ {gamification.rankTitle} • Level {gamification.level}
-          </span>
-
-          <div className="mt-3 flex flex-wrap gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-sun/40 bg-sun/15 px-3 py-1 text-xs font-bold text-sun-foreground">
-              🔥 {gamification.streakDays}-Day Streak
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
-              ⭐ {gamification.xpPoints} XP
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-violet/25 bg-violet/10 px-3 py-1 text-xs font-bold text-violet">
-              🎖️ {gamification.badgeCount} Badges
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {resume ? (
-        <div className="relative mt-5 flex flex-wrap items-center gap-4 rounded-2xl border border-primary/25 bg-primary/5 p-4">
-          {resume.course.image_url ? (
-            <img
-              src={resume.course.image_url}
-              alt=""
-              className="h-16 w-24 shrink-0 rounded-xl object-cover"
-            />
-          ) : (
-            <span className="grid h-16 w-24 shrink-0 place-items-center rounded-xl bg-gradient-brand text-primary-foreground">
-              <BookOpen className="size-6" />
-            </span>
-          )}
-          <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary">
-              ▶️ Resume learning
-            </p>
-            <p className="truncate font-semibold">{resume.lesson.title}</p>
-            <p className="truncate text-xs text-muted-foreground">
-              {resume.course.title} · {resume.completedLessons}/{resume.totalLessons} lessons ·{" "}
-              {resume.progress}%
-            </p>
-            <div className="mt-2 max-w-sm">
-              <ProgressBar value={resume.progress} />
-            </div>
-          </div>
-          <Button asChild variant="brand" className="rounded-full">
-            <Link to="/student/learn/$slug" params={{ slug: resume.course.slug }}>
-              <PlayCircle className="size-4" /> Resume Lesson
-            </Link>
-          </Button>
-        </div>
-      ) : (
-        <div className="relative mt-5 rounded-2xl border border-dashed border-border/70 bg-card/30 p-4 text-sm text-muted-foreground">
-          You have finished every lesson in your current courses. Pick a new course to keep the
-          streak alive!{" "}
-          <Link to="/student/courses" className="font-semibold text-primary">
-            Browse courses
-          </Link>
-          .
-        </div>
-      )}
-    </section>
-  );
-}
-
-function CourseCard({
+function CourseRow({
   row,
   studentName,
 }: {
@@ -241,130 +116,62 @@ function CourseCard({
   };
 
   return (
-    <article className="glass-panel glass-hover overflow-hidden rounded-3xl border">
-      {row.course.image_url ? (
-        <img
-          src={row.course.image_url}
-          alt=""
-          className="h-36 w-full object-cover"
-          loading="lazy"
-        />
-      ) : (
-        <div className="grid h-36 w-full place-items-center bg-gradient-brand text-primary-foreground">
-          <BookOpen className="size-10" />
-        </div>
-      )}
-      <div className="p-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h3 className="truncate text-base font-bold">{row.course.title}</h3>
-            <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
-              {row.course.short_description ?? "AIKIDZ guided course"}
-            </p>
+    <li className="glass-tile rounded-2xl border p-3 transition hover:border-primary/30">
+      <div className="flex items-center gap-3">
+        {row.course.image_url ? (
+          <img
+            src={row.course.image_url}
+            alt=""
+            className="size-14 shrink-0 rounded-xl object-cover sm:size-16"
+            loading="lazy"
+          />
+        ) : (
+          <span className="grid size-14 shrink-0 place-items-center rounded-xl bg-gradient-brand text-primary-foreground sm:size-16">
+            <BookOpen className="size-6" aria-hidden />
+          </span>
+        )}
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold">{row.course.title}</p>
+              <p className="truncate text-[11px] text-muted-foreground">
+                {row.completedLessons} of {row.totalLessons} lessons
+              </p>
+            </div>
+            {completed ? (
+              <span className="shrink-0 rounded-full bg-mint/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-mint">
+                Completed
+              </span>
+            ) : (
+              <span className="shrink-0 text-xs font-bold tabular-nums">{row.progress}%</span>
+            )}
           </div>
-          {completed ? (
-            <span className="shrink-0 rounded-full bg-mint/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-mint">
-              Completed
-            </span>
-          ) : null}
+          <div className="mt-2">
+            <ProgressBar value={row.progress} />
+          </div>
         </div>
 
-        <div className="mt-4 flex items-center gap-3">
-          <ProgressBar value={row.progress} />
-          <span className="text-xs font-bold tabular-nums">{row.progress}%</span>
-        </div>
-        <p className="mt-1 text-[11px] text-muted-foreground">
-          {row.completedLessons} of {row.totalLessons} lessons complete
-        </p>
-
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="flex shrink-0 items-center gap-1">
           {completed ? (
             <Button
               variant="outline"
-              size="sm"
-              className="rounded-full border-mint/40 bg-mint/15 text-mint hover:bg-mint/25 hover:text-mint"
+              size="icon"
+              className="size-8 rounded-xl border-mint/40 bg-mint/15 text-mint hover:bg-mint/25 hover:text-mint"
               onClick={download}
+              title="Download certificate"
             >
-              <Download className="size-4" /> Download Certificate
+              <Download className="size-4" aria-hidden />
             </Button>
-          ) : (
-            <Button asChild variant="brand" size="sm" className="rounded-full">
-              <Link to="/student/learn/$slug" params={{ slug: row.course.slug }}>
-                <PlayCircle className="size-4" /> Continue
-              </Link>
-            </Button>
-          )}
-          <Button asChild variant="outline" size="sm" className="rounded-full">
+          ) : null}
+          <Button asChild variant="brand" size="sm" className="rounded-xl">
             <Link to="/student/learn/$slug" params={{ slug: row.course.slug }}>
-              {completed ? "Review course" : "Open lessons"}
+              {completed ? "Review" : "Continue"}
             </Link>
           </Button>
         </div>
       </div>
-    </article>
-  );
-}
-
-function LiveCard({ session }: { session: LiveSessionRow }) {
-  const live = session.status === "live";
-  return (
-    <article
-      className={cn(
-        "glass-panel rounded-3xl border p-5",
-        live && "border-destructive/40 ring-2 ring-destructive/30",
-      )}
-    >
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
-            {session.batchName ?? "Your batch"}
-          </p>
-          <h3 className="mt-1 text-base font-bold">{session.title}</h3>
-          <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
-            {session.topic ?? "Live robotics session"}
-          </p>
-        </div>
-        {live ? (
-          <span className="inline-flex items-center gap-2 rounded-full bg-destructive/15 px-3 py-1 text-xs font-bold text-destructive">
-            <span className="relative flex size-2.5">
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-destructive opacity-75" />
-              <span className="relative inline-flex size-2.5 rounded-full bg-destructive" />
-            </span>
-            Class is LIVE now
-          </span>
-        ) : (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary/70 px-3 py-1 text-xs font-semibold text-muted-foreground">
-            <Clock className="size-3.5" /> Upcoming
-          </span>
-        )}
-      </div>
-
-      <div className="mt-4 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
-        <span className="inline-flex items-center gap-1.5">
-          <CalendarDays className="size-3.5" /> {timeRange(session)}
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <GraduationCap className="size-3.5" /> {session.teacherName ?? "AIKIDZ instructor"}
-        </span>
-      </div>
-
-      <div className="mt-4 flex flex-wrap gap-2">
-        {session.meetingUrl ? (
-          <Button asChild variant={live ? "brand" : "outline"} size="sm" className="rounded-full">
-            <a href={session.meetingUrl} target="_blank" rel="noreferrer">
-              <ExternalLink className="size-4" /> {live ? "Join Class" : "Join class link"}
-            </a>
-          </Button>
-        ) : (
-          <Button size="sm" className="rounded-full" disabled>
-            Link coming soon
-          </Button>
-        )}
-        <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-[11px] font-semibold text-primary">
-          {session.canJoin ? "Doors are open" : "Doors open 5 min before"}
-        </span>
-      </div>
-    </article>
+    </li>
   );
 }
 
@@ -390,7 +197,7 @@ function DiyCard({ guide }: { guide: DiyGuideRow }) {
   const doneCount = guide.componentsNeeded.filter((item) => checked[item]).length;
 
   return (
-    <article className="glass-panel rounded-3xl border p-5">
+    <article className="glass-tile rounded-2xl border p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -406,25 +213,25 @@ function DiyCard({ guide }: { guide: DiyGuideRow }) {
               {guide.kitType ?? "AIKIDZ DIY kit"}
             </span>
           </div>
-          <h3 className="mt-2 text-base font-bold">{guide.title}</h3>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <h3 className="mt-2 text-sm font-bold">{guide.title}</h3>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">
             {guide.componentsNeeded.length} components · {doneCount} gathered
           </p>
         </div>
         <Button
           variant="outline"
           size="sm"
-          className="rounded-full"
+          className="rounded-xl"
           onClick={() => setOpen((value) => !value)}
           aria-expanded={open}
         >
-          <Wrench className="size-4" /> {open ? "Hide guide" : "Open guide"}
+          <Wrench className="size-3.5" aria-hidden /> {open ? "Hide guide" : "Open guide"}
           {open ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
         </Button>
       </div>
 
       {open ? (
-        <div className="mt-5 space-y-5 border-t pt-5">
+        <div className="mt-4 space-y-4 border-t pt-4">
           <div>
             <h4 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
               Components checklist
@@ -482,7 +289,7 @@ function DiyCard({ guide }: { guide: DiyGuideRow }) {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="rounded-full"
+                  className="rounded-xl"
                   onClick={() => void copyCode()}
                   disabled={copying}
                 >
@@ -491,7 +298,7 @@ function DiyCard({ guide }: { guide: DiyGuideRow }) {
                   ) : (
                     <Copy className="size-3.5" />
                   )}
-                  Copy Code
+                  Copy code
                 </Button>
               </div>
               <pre className="mt-2 max-h-72 overflow-auto rounded-2xl bg-slate-950/95 p-4 text-[12px] leading-relaxed text-slate-100">
@@ -538,28 +345,29 @@ function BadgeCard({
   return (
     <article
       className={cn(
-        "glass-panel rounded-3xl border p-5 text-center transition",
+        "rounded-2xl border p-3 text-center transition",
         unlocked
-          ? "border-sun/50 bg-sun/10 shadow-[0_0_32px_-12px_rgba(241,183,93,0.8)]"
-          : "grayscale opacity-60",
+          ? "border-sun/50 bg-sun/10 shadow-[0_0_24px_-14px_rgba(241,183,93,0.9)]"
+          : "border-border/60 bg-secondary/30 grayscale opacity-60",
       )}
     >
       <div
         className={cn(
-          "mx-auto grid size-16 place-items-center rounded-2xl text-3xl",
+          "mx-auto grid size-11 place-items-center rounded-xl text-xl",
           unlocked ? "bg-sun/20" : "bg-muted/60",
         )}
       >
         <span aria-hidden>{emoji}</span>
       </div>
-      <h3 className="mt-3 text-sm font-bold">{title}</h3>
-      {unlocked ? (
-        <p className="mt-1 text-[11px] font-semibold text-mint">
-          Unlocked {unlockedAt ? dateLabel(unlockedAt) : ""}
-        </p>
-      ) : (
-        <p className="mt-1 text-[11px] text-muted-foreground">{requirement}</p>
-      )}
+      <h3 className="mt-2 truncate text-[11px] font-bold">{title}</h3>
+      <p
+        className={cn(
+          "mt-0.5 line-clamp-2 text-[10px] leading-snug",
+          unlocked ? "font-semibold text-mint" : "text-muted-foreground",
+        )}
+      >
+        {unlocked ? `Unlocked ${unlockedAt ? dateLabel(unlockedAt) : ""}` : requirement}
+      </p>
     </article>
   );
 }
@@ -630,7 +438,6 @@ function AssignmentSubmitDialog({
 export function StudentHub() {
   const qc = useQueryClient();
   const { profile, user } = useAuth();
-  const [tab, setTab] = useDashTab("courses");
   const [submitting, setSubmitting] = useState<AssignmentRow | null>(null);
 
   const profileQuery = useQuery(
@@ -657,8 +464,15 @@ export function StudentHub() {
   const studentId = data?.student.roll_number ?? data?.student.id;
   const assignments = assignmentsQuery.data ?? [];
   const pendingAssignments = assignments.filter((row) => !row.submission);
-  const doneAssignments = assignments.filter((row) => Boolean(row.submission));
-  const sessions = liveQuery.data?.sessions ?? [];
+  const submittedAssignments = assignments.filter((row) => Boolean(row.submission));
+  const sessions = [...(liveQuery.data?.sessions ?? [])]
+    .filter((session) => session.status === "live" || session.status === "upcoming")
+    .sort((a, b) => {
+      if (a.status !== b.status) return a.status === "live" ? -1 : 1;
+      if (!a.startTime) return 1;
+      if (!b.startTime) return -1;
+      return new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
+    });
   const guides = diyQuery.data ?? [];
   const unlockedBadges = gamification?.badges ?? [];
   const knownBadgeIds = new Set(BADGE_CATALOG.map((badge) => badge.badgeId));
@@ -678,8 +492,13 @@ export function StudentHub() {
       title={`Hi ${firstName}! 👋`}
       subtitle="Your robotics & AI learning hub — courses, live classes, projects and badges."
       actions={
-        <Button variant="outline" size="sm" className="rounded-full" onClick={refresh}>
-          <RefreshCw className="size-4" /> Refresh
+        <Button
+          variant="outline"
+          size="sm"
+          className="rounded-xl border-white/60 bg-white/15 text-white shadow-none backdrop-blur-md hover:border-white hover:bg-white/25 hover:text-white"
+          onClick={refresh}
+        >
+          <RefreshCw className="size-4" aria-hidden /> Refresh
         </Button>
       }
     >
@@ -692,321 +511,217 @@ export function StudentHub() {
           Your student profile isn&apos;t linked yet. Ask an AIKIDZ admin to connect it.
         </Empty>
       ) : (
-        <div className="space-y-6">
-          <Tabs value={tab} onValueChange={setTab}>
-            <TabsNav
-              compact
-              tabs={[
-                { value: "courses", label: "📚 My Courses & LMS" },
-                { value: "live", label: "🚀 Live Classes" },
-                {
-                  value: "assignments",
-                  label: "📝 Assignments",
-                  badge: pendingAssignments.length || undefined,
-                },
-                { value: "diy", label: "🛠️ DIY Lab" },
-                { value: "badges", label: "🎖️ Badges" },
-              ]}
-            />
+        <div className="space-y-6 sm:space-y-8">
+          <StudentOverview
+            courses={data.courses}
+            gamification={gamification}
+            resume={continueQuery.data ?? null}
+            sessions={sessions}
+            assignments={assignments}
+          />
 
-            <StudentOverview
-              courses={data.courses}
-              gamification={gamification}
-              resume={continueQuery.data ?? null}
-              sessions={sessions}
-              assignments={assignments}
-            />
-
-            <div className="hidden">
-            <TabsContent value="courses" className="space-y-6">
-              <div className="grid gap-4 sm:grid-cols-3">
-                <StatCard
-                  label="Courses enrolled"
-                  value={data.courses.length}
-                  icon={BookOpen}
-                  hint={`${data.courses.filter((row) => row.progress >= 100).length} completed`}
-                />
-                <StatCard
-                  label="Average progress"
-                  value={`${
-                    data.courses.length
-                      ? Math.round(
-                          data.courses.reduce((total, row) => total + row.progress, 0) /
-                            data.courses.length,
-                        )
-                      : 0
-                  }%`}
-                  icon={Flame}
-                  tone="sun"
-                />
-                <StatCard
-                  label="Certificates earned"
-                  value={data.courses.filter((row) => row.progress >= 100).length}
-                  icon={Award}
-                  tone="mint"
-                />
-              </div>
-
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
+            <Panel
+              title="My courses"
+              description="Pick up where you left off and keep your streak alive."
+              action={
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="rounded-xl border-primary/25 bg-primary/5 text-primary hover:bg-primary/10 hover:text-primary"
+                >
+                  <Link to="/student/courses">All courses</Link>
+                </Button>
+              }
+            >
               {data.courses.length === 0 ? (
                 <EmptyState
                   action={
-                    <Button asChild variant="brand" className="rounded-full">
-                      <Link to="/student/courses">Browse courses</Link>
+                    <Button asChild variant="brand" size="sm" className="rounded-xl">
+                      <Link to="/student/courses">
+                        <BookOpen className="size-4" aria-hidden /> Browse courses
+                      </Link>
                     </Button>
                   }
                 >
                   You haven&apos;t enrolled in a course yet.
                 </EmptyState>
               ) : (
-                <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                <ul className="space-y-2.5">
                   {data.courses.map((row) => (
-                    <CourseCard key={row.courseId} row={row} studentName={studentName} />
+                    <CourseRow key={row.courseId} row={row} studentName={studentName} />
                   ))}
-                </div>
+                </ul>
               )}
-            </TabsContent>
+            </Panel>
 
-            <TabsContent value="live" className="space-y-6">
-              <Panel
-                title="Live class schedule"
-                description={
-                  liveQuery.data?.batch
-                    ? `${liveQuery.data.batch.name} · ${liveQuery.data.batch.schedule ?? "Schedule shared by your teacher"}`
-                    : "Sessions for your batch"
-                }
-                action={
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                    <CalendarDays className="size-3.5" /> {sessions.length} scheduled
+            <Panel
+              title="Live classes"
+              description={
+                liveQuery.data?.batch
+                  ? `${liveQuery.data.batch.name} · ${liveQuery.data.batch.schedule ?? "Schedule shared by your teacher"}`
+                  : "Sessions for your batch"
+              }
+              action={
+                <span className="inline-flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+                    <CalendarDays className="size-3.5" aria-hidden /> {sessions.length}
                   </span>
-                }
-              >
-                {liveQuery.isLoading ? (
-                  <LoadingGrid cards={1} rows={0} />
-                ) : liveQuery.isError ? (
-                  <ErrorNote message="Could not load the live schedule. Please refresh." />
-                ) : sessions.length === 0 ? (
-                  <EmptyState>No live classes scheduled right now. Check back soon.</EmptyState>
-                ) : (
-                  <div className="grid gap-4 xl:grid-cols-2">
-                    {sessions.map((session) => (
-                      <LiveCard key={session.id} session={session} />
-                    ))}
-                  </div>
-                )}
-              </Panel>
-            </TabsContent>
-
-            <TabsContent value="assignments" className="space-y-6">
-              <Panel
-                title={`To Do (${pendingAssignments.length})`}
-                description="Submit your write-up and a project or video link before the due date."
-              >
-                {assignmentsQuery.isLoading ? (
-                  <LoadingGrid cards={1} rows={0} />
-                ) : assignmentsQuery.isError ? (
-                  <ErrorNote message="Could not load assignments. Please refresh." />
-                ) : pendingAssignments.length === 0 ? (
-                  <EmptyState>You&apos;re all caught up — nothing pending. 🎉</EmptyState>
-                ) : (
-                  <div className="space-y-4">
-                    {pendingAssignments.map((assignment) => (
-                      <div key={assignment.id} className="glass-tile rounded-2xl border p-4">
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="font-semibold">{assignment.title}</p>
-                            <p className="text-xs text-muted-foreground">
-                              Due {dateLabel(assignment.due_date)} · {assignment.max_marks ?? 100}{" "}
-                              marks
-                            </p>
-                          </div>
-                          <Button
-                            variant="brand"
-                            size="sm"
-                            className="rounded-full"
-                            onClick={() => setSubmitting(assignment)}
-                          >
-                            <Send className="size-4" /> Submit Work
-                          </Button>
-                        </div>
-                        {assignment.description ? (
-                          <p className="mt-2 whitespace-pre-line text-sm text-muted-foreground">
-                            {assignment.description}
-                          </p>
-                        ) : null}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </Panel>
-
-              <Panel
-                title={`Submitted & Graded (${doneAssignments.length})`}
-                description="Marks and feedback appear here as soon as your teacher grades your work."
-              >
-                {doneAssignments.length === 0 ? (
-                  <EmptyState>Nothing submitted yet.</EmptyState>
-                ) : (
-                  <ul className="divide-y">
-                    {doneAssignments.map((assignment) => {
-                      const submission = assignment.submission;
-                      const graded = submission?.status === "graded";
-                      return (
-                        <li key={assignment.id} className="py-4">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="min-w-0 flex-1 truncate font-semibold">
-                              {assignment.title}
-                            </span>
-                            {graded ? (
-                              <span className="rounded-full bg-mint/15 px-2.5 py-0.5 text-xs font-bold text-mint">
-                                {submission?.marks ?? 0}/{assignment.max_marks ?? 100}
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-sun/20 px-2.5 py-0.5 text-xs font-semibold text-sun-foreground">
-                                <Clock className="size-3" /> Awaiting grading
-                              </span>
-                            )}
-                            {!graded ? (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="rounded-full"
-                                onClick={() => setSubmitting(assignment)}
-                              >
-                                Update work
-                              </Button>
-                            ) : null}
-                          </div>
-
-                          {submission?.content ? (
-                            <p className="mt-2 whitespace-pre-line rounded-xl bg-secondary/40 p-3 text-sm">
-                              {submission.content}
-                            </p>
-                          ) : null}
-
-                          <div className="mt-2 flex flex-wrap gap-3 text-xs">
-                            {submission?.project_url ? (
-                              <a
-                                href={submission.project_url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
-                              >
-                                <ExternalLink className="size-3.5" /> Project link
-                              </a>
-                            ) : null}
-                            {submission?.file_url ? (
-                              <a
-                                href={submission.file_url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
-                              >
-                                <ExternalLink className="size-3.5" /> Submitted file
-                              </a>
-                            ) : null}
-                          </div>
-
-                          {graded && submission?.feedback ? (
-                            <div className="mt-3 flex items-start gap-2 rounded-xl border border-mint/30 bg-mint/10 p-3 text-sm">
-                              <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-mint" />
-                              <div>
-                                <p className="text-[10px] font-bold uppercase tracking-wide text-mint">
-                                  Teacher feedback
-                                </p>
-                                <p className="text-foreground/90">{submission.feedback}</p>
-                              </div>
-                            </div>
-                          ) : null}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </Panel>
-            </TabsContent>
-
-            <TabsContent value="diy" className="space-y-6">
-              <div className="glass-panel flex flex-wrap items-center gap-3 rounded-3xl border p-4 text-sm text-muted-foreground">
-                <Sparkles className="size-5 text-sun-foreground" />
-                Pick a kit, tick off the components, copy the sample code and start building. Each
-                guide includes wiring and troubleshooting help.
-              </div>
-              {diyQuery.isLoading ? (
-                <LoadingGrid cards={2} rows={0} />
-              ) : diyQuery.isError ? (
-                <ErrorNote message="Could not load DIY guides. Please refresh." />
-              ) : guides.length === 0 ? (
-                <EmptyState>DIY guides are being prepared. Check back soon.</EmptyState>
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="rounded-xl border-primary/25 bg-primary/5 text-primary hover:bg-primary/10 hover:text-primary"
+                  >
+                    <Link to="/student/live">View all</Link>
+                  </Button>
+                </span>
+              }
+            >
+              {liveQuery.isLoading ? (
+                <LoadingGrid cards={1} rows={0} />
+              ) : liveQuery.isError ? (
+                <ErrorNote message="Could not load the live schedule. Please refresh." />
+              ) : sessions.length === 0 ? (
+                <EmptyState>No live classes scheduled right now. Check back soon.</EmptyState>
               ) : (
-                <div className="space-y-4">
-                  {guides.map((guide) => (
-                    <DiyCard key={guide.id} guide={guide} />
+                <div className="space-y-2.5">
+                  {sessions.map((session) => (
+                    <LiveClassCard key={session.id} session={session} />
                   ))}
                 </div>
               )}
-            </TabsContent>
+            </Panel>
+          </div>
 
-            <TabsContent value="badges" className="space-y-6">
-              <Panel
-                title={`Badge collection (${gamification.badgeCount})`}
-                description="Keep learning to unlock every glowing badge — locked ones show exactly what to do."
-              >
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                  {BADGE_CATALOG.map((badge) => {
-                    const unlocked = unlockedBadges.find(
-                      (entry) => entry.badgeId === badge.badgeId,
-                    );
-                    return (
-                      <BadgeCard
-                        key={badge.badgeId}
-                        title={badge.title}
-                        emoji={badge.emoji}
-                        requirement={badge.requirement}
-                        unlockedAt={unlocked?.unlockedAt ?? null}
-                      />
-                    );
-                  })}
-                  {extraBadges.map((badge) => (
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
+            <Panel
+              title={`Assignments due (${pendingAssignments.length})`}
+              description="Submit your write-up and a project or video link before the due date."
+              action={
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="rounded-xl border-primary/25 bg-primary/5 text-primary hover:bg-primary/10 hover:text-primary"
+                >
+                  <Link to="/student/assignments">All assignments</Link>
+                </Button>
+              }
+            >
+              {assignmentsQuery.isLoading ? (
+                <LoadingGrid cards={1} rows={0} />
+              ) : assignmentsQuery.isError ? (
+                <ErrorNote message="Could not load assignments. Please refresh." />
+              ) : pendingAssignments.length === 0 ? (
+                <EmptyState>You&apos;re all caught up — nothing pending. 🎉</EmptyState>
+              ) : (
+                <div className="space-y-2.5">
+                  {pendingAssignments.map((assignment) => (
+                    <div key={assignment.id} className="glass-tile rounded-2xl border p-3.5">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold">{assignment.title}</p>
+                          <p className="text-[11px] text-muted-foreground">
+                            Due {dateLabel(assignment.due_date)} · {assignment.max_marks ?? 100}{" "}
+                            marks
+                          </p>
+                        </div>
+                        <Button
+                          variant="brand"
+                          size="sm"
+                          className="rounded-xl"
+                          onClick={() => setSubmitting(assignment)}
+                        >
+                          <Send className="size-3.5" aria-hidden /> Submit work
+                        </Button>
+                      </div>
+                      {assignment.description ? (
+                        <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">
+                          {assignment.description}
+                        </p>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {submittedAssignments.length ? (
+                <p className="mt-3 flex items-center gap-1.5 border-t border-dashed pt-3 text-[11px] text-muted-foreground">
+                  <CheckCircle2 className="size-3.5 text-mint" aria-hidden />
+                  {submittedAssignments.length} submitted · marks and feedback in{" "}
+                  <Link to="/student/assignments" className="font-semibold text-primary">
+                    Assignments
+                  </Link>
+                </p>
+              ) : null}
+            </Panel>
+
+            <Panel
+              title={`Badges (${gamification.badgeCount})`}
+              description="Keep learning to unlock every glowing badge."
+              action={
+                <span className="grid size-8 place-items-center rounded-xl bg-sun/20 text-sun-foreground">
+                  <Trophy className="size-4" aria-hidden />
+                </span>
+              }
+            >
+              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+                {BADGE_CATALOG.map((badge) => {
+                  const unlocked = unlockedBadges.find((entry) => entry.badgeId === badge.badgeId);
+                  return (
                     <BadgeCard
                       key={badge.badgeId}
                       title={badge.title}
-                      emoji="🎖️"
-                      requirement="Unlocked"
-                      unlockedAt={badge.unlockedAt ?? null}
+                      emoji={badge.emoji}
+                      requirement={badge.requirement}
+                      unlockedAt={unlocked?.unlockedAt ?? null}
                     />
-                  ))}
-                </div>
-              </Panel>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="glass-panel flex items-center gap-4 rounded-3xl border p-5">
-                  <span className="grid size-12 place-items-center rounded-2xl bg-primary/10 text-primary">
-                    <Star className="size-6" />
-                  </span>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      XP to next level
-                    </p>
-                    <p className="font-display text-2xl font-extrabold">
-                      {gamification.xpToNextLevel} XP
-                    </p>
-                  </div>
-                </div>
-                <div className="glass-panel flex items-center gap-4 rounded-3xl border p-5">
-                  <span className="grid size-12 place-items-center rounded-2xl bg-sun/20 text-sun-foreground">
-                    <Trophy className="size-6" />
-                  </span>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      Current rank
-                    </p>
-                    <p className="font-display text-2xl font-extrabold">{gamification.rankTitle}</p>
-                  </div>
-                </div>
+                  );
+                })}
+                {extraBadges.map((badge) => (
+                  <BadgeCard
+                    key={badge.badgeId}
+                    title={badge.title}
+                    emoji="🎖️"
+                    requirement="Unlocked"
+                    unlockedAt={badge.unlockedAt ?? null}
+                  />
+                ))}
               </div>
-            </TabsContent>
-            </div>
-          </Tabs>
+              <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-primary/5 px-3 py-2 text-[11px] font-semibold text-primary">
+                <span className="inline-flex items-center gap-1.5">
+                  <Award className="size-3.5" aria-hidden /> {gamification.rankTitle}
+                </span>
+                <span>{gamification.xpToNextLevel} XP to next level</span>
+              </div>
+            </Panel>
+          </div>
+
+          <Panel
+            title="DIY lab"
+            description="Pick a kit, tick off the components, copy the sample code and start building."
+            action={
+              <span className="grid size-8 place-items-center rounded-xl bg-sun/20 text-sun-foreground">
+                <Sparkles className="size-4" aria-hidden />
+              </span>
+            }
+          >
+            {diyQuery.isLoading ? (
+              <LoadingGrid cards={1} rows={0} />
+            ) : diyQuery.isError ? (
+              <ErrorNote message="Could not load DIY guides. Please refresh." />
+            ) : guides.length === 0 ? (
+              <EmptyState>DIY guides are being prepared. Check back soon.</EmptyState>
+            ) : (
+              <div className="grid gap-3 xl:grid-cols-2">
+                {guides.map((guide) => (
+                  <DiyCard key={guide.id} guide={guide} />
+                ))}
+              </div>
+            )}
+          </Panel>
         </div>
       )}
 

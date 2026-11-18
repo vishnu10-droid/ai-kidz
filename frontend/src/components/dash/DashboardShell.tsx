@@ -5,20 +5,17 @@ import {
   BookOpen,
   Building2,
   CalendarCheck,
-  CircleHelp,
   ClipboardList,
   GraduationCap,
   LayoutDashboard,
-  ListTodo,
   Mail,
   NotebookPen,
-  Network,
   Package,
   School,
   ShoppingBag,
   Store,
-  Settings,
   Users,
+  Video,
   Wallet,
   type LucideIcon,
 } from "lucide-react";
@@ -43,6 +40,7 @@ import { NotificationsBell } from "./NotificationsBell";
 export const DASH_NAV: Record<AppRole, AdminNavItem[]> = {
   student: [
     { label: "Overview", href: "/student/dashboard", icon: LayoutDashboard },
+    { label: "Live classes", href: "/student/live", icon: Video },
     { label: "My Courses", href: "/student/courses", icon: BookOpen },
     { label: "Assignments", href: "/student/assignments", icon: NotebookPen },
     { label: "Quizzes", href: "/student/quizzes", icon: ClipboardList },
@@ -81,14 +79,13 @@ export const DASH_NAV: Record<AppRole, AdminNavItem[]> = {
     { label: "Revenue", href: "/franchise/dashboard?tab=revenue", icon: BarChart3 },
   ],
   admin: [
-    { label: "Overview", href: "/admin/dashboard", icon: LayoutDashboard },
-    { label: "Reports", href: "/admin/orders", icon: BarChart3 },
-    { label: "Tasks", href: "/admin/enquiries", icon: ListTodo },
-    { label: "Node & events", href: "/admin/schools", icon: Network },
-    { label: "Clients", href: "/admin/users", icon: Users },
-    { label: "Support", href: "/admin/enquiries", icon: CircleHelp },
-    { label: "Monetization", href: "/admin/orders", icon: Package },
-    { label: "Settings", href: "/admin/users", icon: Settings },
+    { label: "Overview", href: "/admin/dashboard", icon: BarChart3 },
+    { label: "Free Trials", href: "/admin/trials", icon: CalendarCheck },
+    { label: "Enquiries", href: "/admin/enquiries", icon: Mail },
+    { label: "Schools", href: "/admin/schools", icon: School },
+    { label: "Franchises", href: "/admin/franchises", icon: Store },
+    { label: "Orders", href: "/admin/orders", icon: Package },
+    { label: "Users & Roles", href: "/admin/users", icon: Users },
   ],
 };
 
@@ -193,7 +190,7 @@ export function DashboardShell({
           collapsed ? "lg:grid-cols-[92px_1fr]" : "lg:grid-cols-[276px_1fr]",
         )}
       >
-        <aside className="sticky top-0 hidden h-screen p-3 lg:block">
+        <aside className="sticky top-0 hidden h-screen lg:block">
           {renderSidebar(collapsed, { onToggle: toggleCollapsed })}
         </aside>
 
@@ -264,7 +261,7 @@ export function DashboardShell({
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent
           side="left"
-          className="w-[288px] border-r-0 bg-[#0b384a]/85 p-2 backdrop-blur-xl sm:max-w-[288px]"
+          className="w-[288px] border-r-0 bg-[#0b384a]/85 p-0 backdrop-blur-xl sm:max-w-[288px]"
         >
           <SheetHeader className="sr-only">
             <SheetTitle>Navigation</SheetTitle>

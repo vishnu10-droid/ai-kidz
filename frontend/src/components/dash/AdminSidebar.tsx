@@ -69,7 +69,7 @@ export function AdminSidebar({
   return (
     <div
       className={cn(
-        "glass-sidebar-teal flex h-full flex-col gap-5 overflow-y-auto rounded-3xl border p-3 transition-[padding] duration-300",
+        "glass-sidebar-teal flex h-full flex-col gap-5 overflow-y-auto p-3 transition-[padding] duration-300",
         collapsed ? "items-center px-2" : "px-4",
       )}
     >
