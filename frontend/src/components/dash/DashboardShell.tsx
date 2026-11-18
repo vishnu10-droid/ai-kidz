@@ -181,7 +181,12 @@ export function DashboardShell({
   );
 
   return (
-    <div className="relative min-h-screen text-foreground">
+    <div
+      className={cn(
+        "relative min-h-screen text-foreground",
+        role === "admin" && "admin-press-scope",
+      )}
+    >
       {/* Ambient backdrop so the translucent surfaces read as glass. */}
       <div aria-hidden className="pointer-events-none fixed inset-0 -z-20 bg-background" />
       <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 admin-mesh" />

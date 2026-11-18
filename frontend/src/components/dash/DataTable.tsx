@@ -6,6 +6,8 @@ import {
   ChevronRight,
   MoreHorizontal,
   Search,
+  SearchX,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
@@ -87,6 +89,7 @@ export function DataTable<T>({
     initialSort ?? { columnId: columns[0]?.id ?? "", direction: "desc" },
   );
   const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(pageSize);
 
   const query = search.trim().toLowerCase();
 
@@ -126,12 +129,12 @@ export function DataTable<T>({
 
   useEffect(() => {
     setPage(1);
-  }, [query, filterValues]);
+  }, [query, filterValues, perPage]);
 
-  const pageCount = Math.max(1, Math.ceil(sorted.length / pageSize));
+  const pageCount = Math.max(1, Math.ceil(sorted.length / perPage));
   const current = Math.min(page, pageCount);
-  const start = (current - 1) * pageSize;
-  const visible = sorted.slice(start, start + pageSize);
+  const start = (current - 1) * perPage;
+  const visible = sorted.slice(start, start + perPage);
 
   const pageNumbers = useMemo(() => {
     const span = 5;
@@ -185,9 +188,9 @@ export function DataTable<T>({
           <div className="flex flex-wrap items-center gap-2">
             {toolbar}
             {searchFields && (
-              <div className="relative w-full sm:w-64">
+              <div className="relative w-full sm:w-72">
                 <Search
-                  className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                  className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
                   aria-hidden
                 />
                 <input
@@ -196,19 +199,29 @@ export function DataTable<T>({
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder={searchPlaceholder}
                   aria-label={searchPlaceholder}
-                  className="glass-tile h-9 w-full rounded-full border pl-9 pr-3 text-sm outline-none transition placeholder:text-muted-foreground focus-visible:border-primary/40 focus-visible:ring-2 focus-visible:ring-ring/30"
+                  className="glass-tile h-10 w-full rounded-full border pl-10 pr-9 text-sm outline-none transition placeholder:text-muted-foreground focus-visible:border-primary/40 focus-visible:ring-2 focus-visible:ring-ring/30"
                 />
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => setSearch("")}
+                    aria-label="Clear search"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground transition hover:bg-secondary hover:text-foreground"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                )}
               </div>
             )}
           </div>
         </div>
       )}
 
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[640px] border-separate border-spacing-0 text-sm">
+      <div className="overflow-x-auto rounded-2xl border border-border/60 bg-surface/25">
+        <table className="w-full min-w-[720px] border-separate border-spacing-0 text-sm">
           {caption && <caption className="sr-only">{caption}</caption>}
           <thead>
-            <tr>
+            <tr className="bg-secondary/40">
               {columns.map((column) => {
                 const isSorted = sort.columnId === column.id;
                 const SortIcon = !isSorted
@@ -224,7 +237,7 @@ export function DataTable<T>({
                       isSorted ? (sort.direction === "asc" ? "ascending" : "descending") : "none"
                     }
                     className={cn(
-                      "border-b border-border/60 px-3 pb-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground",
+                      "border-b border-border/70 px-4 py-3 text-left text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground",
                       column.align === "right" && "text-right",
                       column.className,
                     )}
@@ -249,7 +262,7 @@ export function DataTable<T>({
                 );
               })}
               {actions ? (
-                <th scope="col" className="w-10 border-b border-border/60 pb-2.5">
+                <th scope="col" className="w-12 border-b border-border/70 py-3 pr-3">
                   <span className="sr-only">Actions</span>
                 </th>
               ) : null}
@@ -260,20 +273,40 @@ export function DataTable<T>({
               <tr>
                 <td
                   colSpan={columns.length + (actions ? 1 : 0)}
-                  className="px-3 py-10 text-center text-sm text-muted-foreground"
+                  className="px-4 py-14 text-center"
                 >
-                  {empty ?? "No results match your filters."}
+                  <span className="mx-auto grid size-11 place-items-center rounded-2xl bg-secondary/70 text-muted-foreground">
+                    <SearchX className="size-5" aria-hidden />
+                  </span>
+                  <p className="mt-3 text-sm font-semibold text-foreground">
+                    {empty ?? "No results match your filters."}
+                  </p>
+                  {query || Object.values(filterValues).some((value) => value && value !== "all") ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearch("");
+                        setFilterValues({});
+                      }}
+                      className="mt-2 text-xs font-semibold text-primary hover:underline"
+                    >
+                      Clear search & filters
+                    </button>
+                  ) : null}
                 </td>
               </tr>
             ) : (
               visible.map((row) => (
-                <tr key={rowKey(row)} className="group transition-colors hover:bg-secondary/35">
+                <tr
+                  key={rowKey(row)}
+                  className="group transition-colors even:bg-secondary/20 hover:bg-primary/[0.06]"
+                >
                   {columns.map((column) => (
                     <td
                       key={column.id}
                       className={cn(
-                        "border-b border-border/40 px-3 py-3 align-middle",
-                        column.align === "right" && "text-right",
+                        "border-b border-border/50 px-4 py-3.5 align-middle",
+                        column.align === "right" && "text-right tabular-nums",
                         column.className,
                       )}
                     >
@@ -281,7 +314,7 @@ export function DataTable<T>({
                     </td>
                   ))}
                   {actions ? (
-                    <td className="border-b border-border/40 px-1 py-3 text-right">
+                    <td className="border-b border-border/50 py-3.5 pr-3 text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
@@ -318,12 +351,29 @@ export function DataTable<T>({
         </table>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-xs text-muted-foreground">
-          {sorted.length === 0
-            ? "0 results"
-            : `Showing ${start + 1}–${Math.min(start + pageSize, sorted.length)} of ${sorted.length}`}
-        </p>
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <p className="text-xs font-medium text-muted-foreground">
+            {sorted.length === 0
+              ? "No results"
+              : `Showing ${start + 1}–${Math.min(start + perPage, sorted.length)} of ${sorted.length}`}
+          </p>
+          <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            Rows per page
+            <select
+              value={perPage}
+              onChange={(event) => setPerPage(Number(event.target.value))}
+              aria-label="Rows per page"
+              className="glass-tile h-8 rounded-lg border px-2 text-xs font-semibold text-foreground outline-none focus-visible:border-primary/40"
+            >
+              {[8, 12, 24, 50].map((size) => (
+                <option key={size} value={size}>
+                  {size}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
         <div className="flex items-center gap-1">
           <Button
             variant="ghost"
