@@ -1,5 +1,5 @@
 // Status vocabularies used by the admin screens. Keep values lowercase: they are stored as-is.
-export const TRIAL_STATUSES = ["new", "contacted", "scheduled", "attended", "converted", "cancelled"] as const;
+export const TRIAL_STATUSES = ["new", "scheduled", "attended", "converted", "cancelled"] as const;
 export const ENQUIRY_STATUSES = ["new", "contacted", "follow_up", "converted", "closed"] as const;
 export const APPLICATION_STATUSES = ["new", "contacted", "approved", "rejected"] as const;
 export const ORG_STATUSES = ["pending", "active", "suspended"] as const;

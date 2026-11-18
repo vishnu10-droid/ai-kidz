@@ -5,6 +5,11 @@ const controller = require("../controller/adminController");
 router.use(requireAuth, authorizeRoles("admin"));
 
 router.get("/overview", controller.overview);
+router.get("/analytics", controller.analytics);
+
+router.get("/trials", controller.listTrials);
+router.patch("/trials/:id", controller.updateTrial);
+router.post("/staff", controller.createStaff);
 
 router.get("/users", controller.listUsers);
 router.patch("/users/:id", controller.updateUser);

@@ -3,7 +3,7 @@ import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { CalendarCheck, Mail, Phone } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { patch } from "@/lib/dash.api";
 import { countBy, Field, FilterBar, NotesEditor, StatusBadge } from "@/components/dash/AdminBits";
 import { DashboardShell, Empty, StatCard } from "@/components/dash/DashboardShell";
 import { StatusPicker } from "@/components/dash/StatusPicker";
@@ -31,7 +31,7 @@ function AdminTrials() {
   const counts = useMemo(() => countBy(rows, (r) => r.status), [rows]);
   const today = new Date().toISOString().slice(0, 10);
   const upcoming = rows.filter(
-    (r) => r.preferred_date >= today && !["cancelled", "converted", "attended"].includes(r.status),
+    (r) => (r.preferred_date ?? "") >= today && !["cancelled", "converted", "attended"].includes(r.status),
   ).length;
   const shown = rows.filter(
     (r) =>
@@ -39,12 +39,15 @@ function AdminTrials() {
       matchesSearch(search, r.parent_name, r.child_name, r.email, r.phone, r.preferred_program),
   );
 
-  async function save(id: string, patch: { status?: string; notes?: string | null }) {
-    const { error } = await supabase.from("trial_bookings").update(patch).eq("id", id);
-    if (error) return void toast.error("We couldn't save that change.");
-    toast.success("Trial booking updated");
-    await qc.invalidateQueries({ queryKey: ["admin-trials"] });
-    void qc.invalidateQueries({ queryKey: ["admin-home"] });
+  async function save(id: string, changes: { status?: string; notes?: string | null }) {
+    try {
+      await patch(`/admin/trials/${id}`, changes);
+      toast.success("Trial booking updated");
+      await qc.invalidateQueries({ queryKey: ["admin", "trials"] });
+      void qc.invalidateQueries({ queryKey: ["admin", "overview"] });
+    } catch {
+      toast.error("We couldn't save that change.");
+    }
   }
 
   return (
@@ -97,7 +100,7 @@ function AdminTrials() {
                     <StatusBadge value={r.status} labels={TRIAL_LABELS} />
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Parent: {r.parent_name} · booked {formatDate(r.created_at, true)}
+                    Parent: {r.parent_name} · booked {formatDate(r.createdAt, true)}
                   </p>
                 </div>
                 <StatusPicker
@@ -134,7 +137,7 @@ function AdminTrials() {
               </div>
               <div className="mt-4">
                 <NotesEditor
-                  value={r.notes}
+                  value={r.notes ?? null}
                   onSave={(v) => save(r.id, { notes: v })}
                   label={`Notes for ${r.child_name}`}
                 />

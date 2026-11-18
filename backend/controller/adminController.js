@@ -11,16 +11,69 @@ const {
   Enquiry,
   Assignment,
   Notification,
+  TrialBooking,
   roles,
 } = require("../models");
+const bcrypt = require("bcryptjs");
 const { withId, withIds, money } = require("./helpers");
 
 const monthKey = (date) => new Date(date).toISOString().slice(0, 7);
+const dayKey = (date) => new Date(date).toISOString().slice(0, 10);
+
+/** Percentage change between two windows; null when there is no baseline. */
+const percentChange = (current, previous) => {
+  if (!previous) return current > 0 ? 100 : null;
+  return Math.round(((current - previous) / previous) * 1000) / 10;
+};
+
+const inWindow = (value, start, end) => {
+  const time = new Date(value).getTime();
+  return Number.isFinite(time) && time >= start.getTime() && time < end.getTime();
+};
+
+const sum = (rows, field) => rows.reduce((total, row) => total + Number(row[field] || 0), 0);
+
+/** Admin notifications are personalised, so collect every admin's inbox. */
+async function adminNotifications(limit = 8) {
+  const admins = await User.find({ roles: "admin" }).select("_id").lean();
+  const rows = await Notification.find({ user_id: { $in: admins.map((a) => a._id) } })
+    .sort("-createdAt")
+    .limit(limit)
+    .lean();
+  return withIds(rows);
+}
+
+async function adminTrends(now, paidFees, paidOrders, trials, enquiries) {
+  const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+  const start = new Date(end.getTime() - 30 * 86400000);
+  const previousStart = new Date(start.getTime() - 30 * 86400000);
+
+  const currentRevenue =
+    sum(paidFees.filter((r) => inWindow(r.paid_at || r.createdAt, start, end)), "amount") +
+    sum(paidOrders.filter((r) => inWindow(r.placed_at || r.createdAt, start, end)), "total");
+  const previousRevenue =
+    sum(paidFees.filter((r) => inWindow(r.paid_at || r.createdAt, previousStart, start)), "amount") +
+    sum(paidOrders.filter((r) => inWindow(r.placed_at || r.createdAt, previousStart, start)), "total");
+
+  const currentOrders = paidOrders.filter((r) => inWindow(r.placed_at || r.createdAt, start, end)).length;
+  const previousOrders = paidOrders.filter((r) => inWindow(r.placed_at || r.createdAt, previousStart, start)).length;
+  const currentTrials = trials.filter((r) => inWindow(r.createdAt, start, end)).length;
+  const previousTrials = trials.filter((r) => inWindow(r.createdAt, previousStart, start)).length;
+  const currentEnquiries = enquiries.filter((r) => inWindow(r.createdAt, start, end)).length;
+  const previousEnquiries = enquiries.filter((r) => inWindow(r.createdAt, previousStart, start)).length;
+
+  return {
+    revenue: percentChange(currentRevenue, previousRevenue),
+    orders: percentChange(currentOrders, previousOrders),
+    trials: percentChange(currentTrials, previousTrials),
+    enquiries: percentChange(currentEnquiries, previousEnquiries),
+  };
+}
 
 /** GET /api/admin/overview */
 exports.overview = async (_req, res, next) => {
   try {
-    const [schools, franchises, students, teachers, batches, users, paidFees, paidOrders, enquiries] =
+    const [schools, franchises, students, teachers, batches, users, paidFees, paidOrders, enquiries, trials, allOrders] =
       await Promise.all([
         School.find().lean(),
         Franchise.find().lean(),
@@ -31,6 +84,8 @@ exports.overview = async (_req, res, next) => {
         FeeInvoice.find({ status: "paid" }).select("amount paid_at createdAt").lean(),
         Order.find({ payment_status: "paid" }).select("total placed_at createdAt").lean(),
         Enquiry.find().sort("-createdAt").limit(50).lean(),
+        TrialBooking.find().select("createdAt status").lean(),
+        Order.countDocuments(),
       ]);
 
     const feeRevenue = paidFees.reduce((sum, row) => sum + Number(row.amount || 0), 0);
@@ -108,17 +163,24 @@ exports.overview = async (_req, res, next) => {
         feeRevenue: money(feeRevenue),
         orderRevenue: money(orderRevenue),
         schools: schools.length,
+        onboardedSchools: schools.filter((s) => s.lab_status === "active").length,
         activeSchools: schools.filter((s) => s.status === "active").length,
+        pendingSchools: schools.filter((s) => s.lab_status !== "active").length,
         franchises: franchises.length,
+        activeFranchises: franchises.filter((f) => f.status === "active").length,
         students,
         teachers,
         batches,
         users,
-        orders: await Order.countDocuments(),
+        orders: allOrders,
+        totalOrders: allOrders,
         pendingEnquiries: enquiries.filter((e) => e.status === "new").length,
-        pendingSchools: schools.filter((s) => s.lab_status !== "active").length,
+        activeTrials: trials.filter((t) => !["cancelled", "attended", "converted"].includes(t.status)).length,
+        pendingTrials: trials.filter((t) => t.status === "new").length,
+        totalTrials: trials.length,
         franchiseRevenue: money(feeRevenue * 0.3),
       },
+      trends: await adminTrends(now, paidFees, paidOrders, trials, enquiries),
       revenueSeries: months.map((m) => ({
         label: m.label,
         fees: money(m.fees),
@@ -126,8 +188,12 @@ exports.overview = async (_req, res, next) => {
         total: money(m.fees + m.orders),
       })),
       activity,
+      notifications: await adminNotifications(),
       recentOrders: withIds(recentOrders),
       recentEnquiries: withIds(enquiries.slice(0, 5)),
+      recentTrials: withIds(
+        await TrialBooking.find().sort("-createdAt").limit(5).lean(),
+      ),
       pendingSchools: withIds(schools.filter((s) => s.lab_status !== "active")),
     });
   } catch (error) {
@@ -418,6 +484,187 @@ exports.broadcast = async (req, res, next) => {
     const users = await User.find(filter).select("_id").lean();
     await Notification.insertMany(users.map((user) => ({ user_id: user._id, title, message, link: req.body.link })));
     return res.status(201).json({ sent: users.length });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/* ------------------------------------------------------- analytics / CRM */
+
+function analyticsBuckets(range, now) {
+  const buckets = [];
+  if (range === "weekly") {
+    for (let i = 6; i >= 0; i -= 1) {
+      const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - i));
+      buckets.push({
+        key: dayKey(d),
+        label: d.toLocaleString("en-IN", { weekday: "short" }),
+        full: d.toLocaleString("en-IN", { day: "numeric", month: "short" }),
+      });
+    }
+  } else {
+    for (let i = 5; i >= 0; i -= 1) {
+      const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
+      buckets.push({
+        key: monthKey(d),
+        label: d.toLocaleString("en-IN", { month: "short" }),
+        full: d.toLocaleString("en-IN", { month: "long", year: "numeric" }),
+      });
+    }
+  }
+  return buckets;
+}
+
+/** GET /api/admin/analytics?range=weekly|monthly */
+exports.analytics = async (req, res, next) => {
+  try {
+    const range = req.query.range === "monthly" ? "monthly" : "weekly";
+    const now = new Date();
+    const buckets = analyticsBuckets(range, now);
+    const start = new Date(range === "monthly" ? `${buckets[0].key}-01T00:00:00.000Z` : `${buckets[0].key}T00:00:00.000Z`);
+    const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+    const span = end.getTime() - start.getTime();
+    const previousStart = new Date(start.getTime() - span);
+
+    const [paidFees, paidOrders, trials, enquiries] = await Promise.all([
+      FeeInvoice.find({ status: "paid" }).select("amount paid_at createdAt").lean(),
+      Order.find({ payment_status: "paid" }).select("total placed_at createdAt").lean(),
+      TrialBooking.find().select("createdAt").lean(),
+      Enquiry.find().select("createdAt").lean(),
+    ]);
+
+    const bucketKey = (date) => (range === "monthly" ? monthKey(date) : dayKey(date));
+    const points = buckets.map((bucket) => ({
+      ...bucket,
+      revenue: 0,
+      fees: 0,
+      orders: 0,
+      trials: 0,
+      enquiries: 0,
+    }));
+    const byKey = new Map(points.map((p) => [p.key, p]));
+
+    for (const fee of paidFees) {
+      const bucket = byKey.get(bucketKey(fee.paid_at || fee.createdAt));
+      if (bucket) bucket.fees = money(bucket.fees + Number(fee.amount || 0));
+    }
+    for (const order of paidOrders) {
+      const bucket = byKey.get(bucketKey(order.placed_at || order.createdAt));
+      if (bucket) bucket.orders = money(bucket.orders + Number(order.total || 0));
+    }
+    for (const trial of trials) {
+      const bucket = byKey.get(bucketKey(trial.createdAt));
+      if (bucket) bucket.trials += 1;
+    }
+    for (const enquiry of enquiries) {
+      const bucket = byKey.get(bucketKey(enquiry.createdAt));
+      if (bucket) bucket.enquiries += 1;
+    }
+    for (const point of points) point.revenue = money(point.fees + point.orders);
+
+    const collect = (from, to) => ({
+      revenue: money(
+        sum(paidFees.filter((r) => inWindow(r.paid_at || r.createdAt, from, to)), "amount") +
+          sum(paidOrders.filter((r) => inWindow(r.placed_at || r.createdAt, from, to)), "total"),
+      ),
+      orders: paidOrders.filter((r) => inWindow(r.placed_at || r.createdAt, from, to)).length,
+      trials: trials.filter((r) => inWindow(r.createdAt, from, to)).length,
+      enquiries: enquiries.filter((r) => inWindow(r.createdAt, from, to)).length,
+    });
+
+    const totals = collect(start, end);
+    const previous = collect(previousStart, start);
+    const change = Object.fromEntries(
+      Object.keys(totals).map((key) => [key, percentChange(totals[key], previous[key])]),
+    );
+
+    return res.json({
+      range,
+      generatedAt: now.toISOString(),
+      points,
+      totals,
+      previous,
+      change,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/** GET /api/admin/trials */
+exports.listTrials = async (_req, res, next) => {
+  try {
+    const rows = await TrialBooking.find().sort({ status: 1, preferred_date: 1 }).lean();
+    return res.json(withIds(rows));
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/** PATCH /api/admin/trials/:id */
+exports.updateTrial = async (req, res, next) => {
+  try {
+    const update = {};
+    if (req.body.status !== undefined) {
+      if (!TrialBooking.schema.path("status").enumValues.includes(req.body.status)) {
+        return res.status(400).json({ message: "Invalid trial status" });
+      }
+      update.status = req.body.status;
+    }
+    if (req.body.notes !== undefined) update.notes = req.body.notes;
+    const trial = await TrialBooking.findByIdAndUpdate(req.params.id, update, { new: true, runValidators: true }).lean();
+    if (!trial) return res.status(404).json({ message: "Trial booking not found" });
+    return res.json(withId(trial));
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/** POST /api/admin/staff — admins invite teachers/school staff directly. */
+exports.createStaff = async (req, res, next) => {
+  try {
+    const { full_name, email, password, role, school_id, franchise_id } = req.body;
+    const allowed = ["teacher", "school_admin", "franchise", "admin"];
+    if (!full_name || !email || !password) {
+      return res.status(400).json({ message: "full_name, email and password are required" });
+    }
+    if (!allowed.includes(role)) return res.status(400).json({ message: "Invalid staff role" });
+    if (String(password).length < 8) {
+      return res.status(400).json({ message: "Password must be at least 8 characters" });
+    }
+    if (await User.exists({ email: String(email).toLowerCase() })) {
+      return res.status(409).json({ message: "Email is already registered" });
+    }
+
+    const user = await User.create({
+      email: String(email).toLowerCase(),
+      password: await bcrypt.hash(String(password), 12),
+      full_name,
+      roles: [role],
+    });
+
+    if (role === "teacher") {
+      await Teacher.create({
+        user_id: user._id,
+        full_name,
+        email: user.email,
+        school_id: school_id || undefined,
+        franchise_id: franchise_id || undefined,
+        status: "active",
+      });
+    }
+
+    const admins = await User.find({ roles: "admin" }).select("_id").lean();
+    await Notification.insertMany(
+      admins.map((admin) => ({
+        user_id: admin._id,
+        title: "New staff account",
+        message: `${full_name} was added as ${role}.`,
+        link: "/admin/users",
+      })),
+    );
+
+    return res.status(201).json(withId(user.toObject()));
   } catch (error) {
     return next(error);
   }

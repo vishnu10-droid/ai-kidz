@@ -345,6 +345,24 @@ const Enquiry = model("Enquiry", {
   school_id: ref("School"),
 });
 
+const TrialBooking = model("TrialBooking", {
+  parent_name: { type: String, required: true, trim: true },
+  child_name: { type: String, required: true, trim: true },
+  child_age: Number,
+  email: { type: String, lowercase: true, trim: true },
+  phone: String,
+  preferred_program: String,
+  preferred_date: String,
+  preferred_time: String,
+  status: {
+    type: String,
+    enum: ["new", "scheduled", "attended", "converted", "cancelled"],
+    default: "new",
+  },
+  notes: String,
+  source: { type: String, default: "website" },
+});
+
 module.exports = {
   User,
   School,
@@ -373,5 +391,6 @@ module.exports = {
   Order,
   OrderItem,
   Enquiry,
+  TrialBooking,
   roles,
 };

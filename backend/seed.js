@@ -33,6 +33,7 @@ const {
   Order,
   OrderItem,
   Enquiry,
+  TrialBooking,
   CourseCategory,
   Course,
   CourseModule,
@@ -280,6 +281,7 @@ async function seed() {
     LiveSession.deleteMany({}),
     DiyKitGuide.deleteMany({}),
     Enquiry.deleteMany({}),
+    TrialBooking.deleteMany({}),
     OrderItem.deleteMany({}),
     Order.deleteMany({}),
     User.deleteMany({}),
@@ -794,6 +796,24 @@ async function seed() {
     { name: "Fatima Khan", email: "fatima@example.com", phone: "9812345674", city: "New Delhi", subject: "Fee structure", message: "What is the fee for the beginner robotics course?", status: "converted", source: "website" },
   ]);
 
+  console.log("Seeding free trial bookings...");
+  const trialSeeds = [
+    ["Ritika Malhotra", "Aarav", 9, "ritika@example.com", "9812345670", "Robotics Beginners", -1, "10:00", "new"],
+    ["Sandeep Gupta", "Ishaan", 11, "parent@aikidz.com", "9812345675", "Robotics Intermediate", -4, "16:30", "scheduled"],
+    ["Priya Nair", "Diya", 8, "priya@example.com", "9812345676", "AI for Kids", -6, "11:00", "scheduled"],
+    ["Anil Sharma", "Kabir", 10, "anil@example.com", "9812345677", "Robotics Beginners", -8, "15:00", "attended"],
+    ["Meena Iyer", "Ananya", 7, "meena@example.com", "9812345678", "Creative Coding", -10, "17:00", "converted"],
+    ["Rohit Verma", "Ayaan", 12, "rohit@example.com", "9812345679", "Drone Basics", -12, "13:30", "cancelled"],
+  ];
+  await TrialBooking.insertMany(
+    trialSeeds.map(([parent_name, child_name, child_age, email, phone, preferred_program, days, preferred_time, status]) => ({
+      parent_name, child_name, child_age, email, phone, preferred_program, preferred_time, status,
+      preferred_date: at(Math.abs(days) + 2).toISOString().slice(0, 10),
+      source: "website",
+      createdAt: at(days, 9),
+    })),
+  );
+
   await Notification.insertMany([
     { user_id: studentUser._id, title: "Assignment graded", message: "Motor wiring & driver test · 92/100. Excellent motor wiring!", link: "/student/assignments" },
     { user_id: studentUser._id, title: "Live class tomorrow", message: "Sensors & Actuators Deep Dive · 10:00 AM with Neha Verma.", link: "/student/dashboard?tab=live" },
@@ -803,6 +823,10 @@ async function seed() {
     { user_id: schoolUser._id, title: "Attendance saved", message: "Robotics Batch A attendance is up to date.", link: "/school/dashboard?tab=attendance" },
     { user_id: franchiseUser._id, title: "New centre enquiry", message: "Sunita Rao asked about the Noida summer camp schedule.", link: "/franchise/dashboard?tab=enquiries" },
     { user_id: adminUser._id, title: "New franchise enquiry", message: "Amit Bose wants to open a centre in Indirapuram.", link: "/admin/enquiries" },
+    { user_id: adminUser._id, title: "New trial booking", message: "Ritika Malhotra booked a robotics trial for Aarav.", link: "/admin/trials" },
+    { user_id: adminUser._id, title: "School awaiting approval", message: "Sunrise Public School lab setup is pending.", link: "/admin/schools" },
+    { user_id: adminUser._id, title: "Order ORD-1003 needs payment", message: "A store order is awaiting customer payment.", link: "/admin/orders" },
+    { user_id: adminUser._id, title: "Weekly revenue up 12%", message: "Store and fee collections grew this week.", link: "/admin/dashboard" },
   ]);
 
 

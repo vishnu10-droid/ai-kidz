@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { dashQuery } from "./dash.api";
 
 const count = async (
   table:
@@ -247,19 +248,24 @@ export const adminHomeQuery = () =>
     },
   });
 
+export type AdminTrial = {
+  id: string;
+  parent_name: string;
+  child_name: string;
+  child_age?: number | null;
+  email?: string | null;
+  phone?: string | null;
+  preferred_program?: string | null;
+  preferred_date?: string | null;
+  preferred_time?: string | null;
+  status: string;
+  notes?: string | null;
+  source?: string | null;
+  createdAt?: string;
+};
+
 export const adminTrialsQuery = () =>
-  queryOptions({
-    queryKey: ["admin-trials"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("trial_bookings")
-        .select("*")
-        .order("status", { ascending: true })
-        .order("preferred_date", { ascending: true });
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
+  dashQuery<AdminTrial[]>(["admin", "trials"], "/admin/trials");
 
 export const adminEnquiriesQuery = () =>
   queryOptions({
