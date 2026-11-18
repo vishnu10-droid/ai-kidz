@@ -1,28 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Activity,
-  BadgeCheck,
-  BookOpen,
-  CircleDollarSign,
-  Clock3,
-  Mail,
-  Plus,
-  RefreshCw,
-  School,
-  UserPlus,
-  Users,
-  Zap,
-} from "lucide-react";
-import { useMemo, useState } from "react";
-import { CommissionBarChart, OfficeDonut } from "@/components/dash/AdminV2Charts";
+import { Activity, RefreshCw, UserPlus } from "lucide-react";
+import { AdminOverview } from "@/components/dash/AdminOverview";
 import { StatusBadge } from "@/components/dash/AdminBits";
 import { DataTable } from "@/components/dash/DataTable";
-import { DashboardShell, Panel, StatCard } from "@/components/dash/DashboardShell";
+import { DashboardShell, Panel } from "@/components/dash/DashboardShell";
 import { ErrorNote, LoadingGrid } from "@/components/dash/DashSections";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
-import { dashQuery, dateLabel, money } from "@/lib/dash.api";
+import { ADMIN_OVERVIEW } from "@/lib/admin-overview";
+import { dashQuery, dateLabel } from "@/lib/dash.api";
 import { pageMeta } from "@/lib/seo";
 
 type ActivityRow = {
@@ -32,7 +19,7 @@ type ActivityRow = {
   description?: string | null;
   at: string;
 };
-type AdminOverview = {
+type AdminOverviewResponse = {
   kpis: {
     revenue: number;
     feeRevenue: number;
@@ -59,72 +46,49 @@ export const Route = createFileRoute("/_authenticated/admin/dashboard")({
 });
 
 function AdminDashboard() {
-  const overview = useQuery(dashQuery<AdminOverview>(["admin", "overview"], "/api/admin/overview"));
+  const overview = useQuery(
+    dashQuery<AdminOverviewResponse>(["admin", "overview"], "/api/admin/overview"),
+  );
   const { profile, user } = useAuth();
-  const [range, setRange] = useState<"6M" | "1Y">("6M");
-  const kpis = overview.data?.kpis;
-  const displayName = (profile?.full_name ?? user?.full_name ?? "Admin").split(" ")[0] || "Admin";
-  const chartData = useMemo(() => {
-    const data = overview.data?.revenueSeries ?? [];
-    return (range === "6M" ? data.slice(-6) : data).map((point) => ({
-      label: point.label,
-      value: point.total,
-    }));
-  }, [overview.data?.revenueSeries, range]);
-  const activityRows = overview.data?.activity ?? [];
 
-  const stats = [
-    ["Active people", kpis?.users ?? 0, Users, "primary" as const, 8.2, "this month"],
-    [
-      "Waiting for review",
-      (kpis?.pendingEnquiries ?? 0) + (kpis?.pendingSchools ?? 0),
-      Clock3,
-      "sun" as const,
-      -12,
-      "from last week",
-    ],
-    ["Open deals", kpis?.orders ?? 0, CircleDollarSign, "violet" as const, 5.6, "this month"],
-    ["System uptime", "99.98%", Zap, "mint" as const, 0.02, "last 30 days"],
-    ["Active schools", kpis?.activeSchools ?? 0, School, "primary" as const, 4.1, "this quarter"],
-    ["Learning batches", kpis?.batches ?? 0, BookOpen, "violet" as const, 9.4, "this month"],
-    ["Conversion rate", "18.6%", BadgeCheck, "mint" as const, 2.7, "vs. last month"],
-    ["New enquiries", kpis?.pendingEnquiries ?? 0, Mail, "sun" as const, 6.3, "this week"],
-  ] as const;
+  const displayName = (profile?.full_name ?? user?.full_name ?? "Admin").split(" ")[0] || "Admin";
+  const now = new Date();
+  const hour = now.getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const today = new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  }).format(now);
+  const activityRows = overview.data?.activity ?? [];
 
   return (
     <DashboardShell
       role="admin"
-      title={`Good afternoon, ${displayName}`}
-      subtitle="Here’s what’s happening across your agency today."
+      title={`${greeting}, ${displayName}`}
+      subtitle={today}
+      headerVariant="plain"
+      searchPlaceholder="Search people, clients, settings, requests..."
       actions={
         <>
           <Button
             asChild
-            size="sm"
-            className="rounded-xl bg-[#075b74] text-white shadow-[0_8px_18px_-8px_rgba(5,91,116,.8)] hover:bg-[#064d63]"
-          >
-            <Link to="/admin/orders">
-              <Plus className="size-4" /> Record a deal
-            </Link>
-          </Button>
-          <Button
-            asChild
             variant="outline"
             size="sm"
-            className="rounded-xl border-white/80 bg-white/45 text-[#174c5e] hover:bg-white/75"
+            className="rounded-xl border-white/60 bg-white/15 text-white shadow-none backdrop-blur-md hover:border-white hover:bg-white/25 hover:text-white"
           >
             <a href="#activity">
-              <Activity className="size-4" /> Activity log
+              <Activity className="size-4" aria-hidden /> Activity log
             </a>
           </Button>
           <Button
             asChild
-            variant="outline"
             size="sm"
-            className="rounded-xl border-white/80 bg-white/45 text-[#174c5e] hover:bg-white/75"
+            className="rounded-xl bg-white/90 text-[#0b3d50] shadow-[0_12px_28px_-18px_rgba(4,40,55,0.9)] hover:bg-white"
           >
             <Link to="/admin/users">
-              <UserPlus className="size-4" /> Invite an agent
+              <UserPlus className="size-4" aria-hidden /> Invite an agent
             </Link>
           </Button>
         </>
@@ -136,65 +100,7 @@ function AdminDashboard() {
         <ErrorNote message="Could not load the platform overview. Please refresh." />
       ) : (
         <div className="space-y-5">
-          <div className="grid gap-5 xl:grid-cols-[1.4fr_.9fr]">
-            <Panel
-              title="Agency commission"
-              description="Commission earned across the platform"
-              className="min-h-[360px]"
-              action={
-                <div className="flex rounded-xl bg-[#e9f2f4] p-1">
-                  {(["6M", "1Y"] as const).map((option) => (
-                    <button
-                      key={option}
-                      type="button"
-                      onClick={() => setRange(option)}
-                      className={`rounded-lg px-3 py-1 text-xs font-bold transition ${range === option ? "bg-white text-[#075b74] shadow-sm" : "text-[#6b8790]"}`}
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-              }
-            >
-              <div className="grid gap-3 sm:grid-cols-3">
-                <StatPill label="This month" value={money(kpis?.revenue ?? 0)} />
-                <StatPill label="Fee revenue" value={money(kpis?.feeRevenue ?? 0)} />
-                <StatPill label="Store revenue" value={money(kpis?.orderRevenue ?? 0)} />
-              </div>
-              <CommissionBarChart
-                data={chartData.length ? chartData : [{ label: "Now", value: 0 }]}
-              />
-            </Panel>
-            <Panel
-              title="Commission by office"
-              description="Distribution of total commissions"
-              className="min-h-[360px]"
-              action={
-                <button type="button" className="text-xs font-bold text-[#08637b] hover:underline">
-                  View report
-                </button>
-              }
-            >
-              <OfficeDonut />
-              <div className="mt-7 border-t border-[#d5e7eb] pt-4 text-center text-xs text-[#5e7e88]">
-                Up <span className="font-bold text-[#167967]">12.5%</span> compared to the previous
-                period
-              </div>
-            </Panel>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {stats.map(([label, value, icon, tone, delta, hint]) => (
-              <StatCard
-                key={label}
-                label={label}
-                value={value}
-                icon={icon}
-                tone={tone}
-                trend={{ value: delta, caption: hint }}
-              />
-            ))}
-          </div>
+          <AdminOverview data={ADMIN_OVERVIEW} />
 
           <section id="activity" className="scroll-mt-24">
             <Panel
@@ -267,14 +173,5 @@ function AdminDashboard() {
         </div>
       )}
     </DashboardShell>
-  );
-}
-
-function StatPill({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-[#d9eaed] bg-white/55 px-3.5 py-3">
-      <p className="text-[10px] font-bold uppercase tracking-[.11em] text-[#6b8991]">{label}</p>
-      <p className="mt-1 text-lg font-extrabold tracking-tight text-[#12495d]">{value}</p>
-    </div>
   );
 }

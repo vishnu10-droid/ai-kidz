@@ -8,10 +8,10 @@ export const CONTACT = {
 };
 
 export const STATS = [
-  { value: 50000, suffix: "+", label: "Kits Delivered" },
-  { value: 1000, suffix: "+", label: "Schools" },
-  { value: 1000000, suffix: "+", label: "Students" },
-  { value: 20000, suffix: "+", label: "Teachers Trained" },
+  { value: 10000, suffix: "+", label: "Kits Delivered" },
+  { value: 500, suffix: "+", label: "Schools" },
+  { value: 50000, suffix: "+", label: "Students" },
+  { value: 1000, suffix: "+", label: "Teachers Trained" },
 ];
 
 export const SKILLS = [

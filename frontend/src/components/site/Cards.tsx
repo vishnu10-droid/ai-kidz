@@ -93,7 +93,7 @@ export type CourseLite = {
   course_categories?: { name: string; slug: string } | null;
 };
 
-export function CourseCard({ course }: { course: CourseLite }) {
+export function CourseCard({ course, showFee = true }: { course: CourseLite; showFee?: boolean }) {
   return (
     <motion.article whileHover={{ y: -6 }} transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }} className="glow-card group relative flex h-full flex-col overflow-hidden rounded-3xl border bg-card shadow-soft">
       <div className="relative m-2 aspect-[16/10] overflow-hidden rounded-[1.25rem]">
@@ -111,14 +111,14 @@ export function CourseCard({ course }: { course: CourseLite }) {
           {course.duration && <span className="inline-flex items-center gap-1 rounded-full border bg-muted/60 px-2.5 py-1 font-medium text-foreground/80"><Clock className="size-3 text-violet" />{course.duration}</span>}
           <span className="inline-flex items-center gap-1 rounded-full border bg-muted/60 px-2.5 py-1 font-medium capitalize text-foreground/80"><Signal className="size-3 text-sun" />{course.level}</span>
         </div>
-        <div className="mt-auto flex items-center justify-between border-t border-dashed pt-4">
-          {course.price === undefined || course.price === null ? (
+        <div className={cn("mt-auto flex items-center border-t border-dashed pt-4", showFee ? "justify-between" : "justify-end")}>
+          {showFee && (course.price === undefined || course.price === null ? (
             <span />
           ) : Number(course.price) > 0 ? (
             <span className="flex flex-col leading-tight"><span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Course fee</span><span className="font-display text-lg font-bold">{formatINR(Number(course.price))}</span></span>
           ) : (
             <span className="text-sm font-semibold text-mint">Free</span>
-          )}
+          ))}
           <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-3.5 py-2 text-xs font-semibold text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
             View Course <ArrowUpRight className="size-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
           </span>

@@ -13,16 +13,18 @@ import type { ReactNode } from "react";
 /** Scrollable tab bar used by every dashboard workspace. */
 export function TabsNav({
   tabs,
+  compact = false,
 }: {
   tabs: { value: string; label: string; badge?: number | undefined }[];
+  compact?: boolean;
 }) {
   return (
-    <TabsList className="glass-panel mb-6 flex h-auto w-full flex-wrap justify-start gap-1 rounded-2xl border p-1.5">
+    <TabsList className={cn("glass-panel flex h-auto w-full flex-wrap justify-start gap-1 rounded-2xl border", compact ? "mb-4 p-1" : "mb-6 p-1.5")}>
       {tabs.map((tab) => (
         <TabsTrigger
           key={tab.value}
           value={tab.value}
-          className="rounded-xl px-3.5 py-2 text-sm font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-soft"
+          className={cn("rounded-xl font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-soft", compact ? "px-2.5 py-1.5 text-xs" : "px-3.5 py-2 text-sm")}
         >
           {tab.label}
           {tab.badge ? (

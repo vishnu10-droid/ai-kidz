@@ -45,6 +45,7 @@ import { cn } from "@/lib/utils";
 import { DashboardShell, Empty, Panel, ProgressBar, StatCard } from "./DashboardShell";
 import { FormDialog } from "./DashKit";
 import { EmptyState, ErrorNote, LoadingGrid, TabsNav } from "./DashSections";
+import { StudentOverview } from "./StudentOverview";
 
 type BadgeCatalogEntry = {
   badgeId: string;
@@ -653,6 +654,7 @@ export function StudentHub() {
   const studentName =
     data?.student.full_name ?? profile?.full_name ?? user?.full_name ?? "AIKIDZ learner";
   const firstName = studentName.split(" ")[0] ?? "there";
+  const studentId = data?.student.roll_number ?? data?.student.id;
   const assignments = assignmentsQuery.data ?? [];
   const pendingAssignments = assignments.filter((row) => !row.submission);
   const doneAssignments = assignments.filter((row) => Boolean(row.submission));
@@ -669,6 +671,10 @@ export function StudentHub() {
   return (
     <DashboardShell
       role="student"
+      displayTitle={`Good ${new Date().getHours() < 12 ? "morning" : new Date().getHours() < 18 ? "afternoon" : "evening"}, ${firstName}`}
+      displaySubtitle={`${new Intl.DateTimeFormat("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(new Date())}${studentId ? ` · Student ID: ${studentId}` : ""}`}
+      headerVariant="plain"
+      searchPlaceholder="Search courses, lessons, projects, and more..."
       title={`Hi ${firstName}! 👋`}
       subtitle="Your robotics & AI learning hub — courses, live classes, projects and badges."
       actions={
@@ -687,14 +693,9 @@ export function StudentHub() {
         </Empty>
       ) : (
         <div className="space-y-6">
-          <HeroBanner
-            name={studentName}
-            gamification={gamification}
-            resume={continueQuery.data ?? null}
-          />
-
           <Tabs value={tab} onValueChange={setTab}>
             <TabsNav
+              compact
               tabs={[
                 { value: "courses", label: "📚 My Courses & LMS" },
                 { value: "live", label: "🚀 Live Classes" },
@@ -708,6 +709,15 @@ export function StudentHub() {
               ]}
             />
 
+            <StudentOverview
+              courses={data.courses}
+              gamification={gamification}
+              resume={continueQuery.data ?? null}
+              sessions={sessions}
+              assignments={assignments}
+            />
+
+            <div className="hidden">
             <TabsContent value="courses" className="space-y-6">
               <div className="grid gap-4 sm:grid-cols-3">
                 <StatCard
@@ -995,6 +1005,7 @@ export function StudentHub() {
                 </div>
               </div>
             </TabsContent>
+            </div>
           </Tabs>
         </div>
       )}

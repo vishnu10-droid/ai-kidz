@@ -68,7 +68,7 @@ export function SiteHeader() {
                 : "border-border/60 bg-surface/70 shadow-soft backdrop-blur-xl",
           )}
         >
-        <Logo light={onDark} />
+        <Logo light={onDark} showSubtitle />
 
         <nav className="hidden items-center gap-0.5 xl:flex" aria-label="Main">
           {NAV.map((item) =>
@@ -190,7 +190,7 @@ export function SiteHeader() {
             </SheetTrigger>
             <SheetContent side="right" className="w-[88vw] max-w-sm overflow-y-auto">
               <SheetHeader>
-                <SheetTitle className="text-left"><Logo /></SheetTitle>
+                <SheetTitle className="text-left"><Logo showSubtitle /></SheetTitle>
               </SheetHeader>
               <nav className="mt-4 flex flex-col gap-1 px-4 pb-6" aria-label="Mobile">
                 {NAV.map((item) => (

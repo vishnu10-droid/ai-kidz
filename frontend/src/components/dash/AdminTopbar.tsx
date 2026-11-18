@@ -51,6 +51,7 @@ export function AdminTopbar({
   onOpenMenu,
   onSignOut,
   notifications,
+  searchPlaceholder = "Search…",
 }: {
   items: AdminNavItem[];
   roleLabel: string;
@@ -59,6 +60,7 @@ export function AdminTopbar({
   onOpenMenu: () => void;
   onSignOut: () => void;
   notifications?: ReactNode;
+  searchPlaceholder?: string | undefined;
 }) {
   const router = useRouter();
   const crumbs = useCrumbTrail(items);
@@ -143,11 +145,11 @@ export function AdminTopbar({
         <button
           type="button"
           onClick={() => setPaletteOpen(true)}
-          className="glass-tile hidden h-9 w-56 items-center gap-2 rounded-full border px-3 text-sm text-white/70 transition hover:border-white/30 hover:text-white sm:flex lg:w-72"
+          className="glass-tile hidden h-9 w-56 min-w-0 items-center gap-2 rounded-full border px-3 text-sm text-white/70 transition hover:border-white/30 hover:text-white sm:flex lg:w-72 xl:w-[25rem]"
         >
           <Search className="size-4 shrink-0" aria-hidden />
-          <span className="flex-1 text-left">Search…</span>
-          <kbd className="rounded-md border border-white/25 bg-white/10 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-white/80">
+          <span className="min-w-0 flex-1 truncate text-left">{searchPlaceholder}</span>
+          <kbd className="shrink-0 rounded-md border border-white/25 bg-white/10 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-white/80">
             ⌘K
           </kbd>
         </button>

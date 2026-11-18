@@ -32,6 +32,7 @@ export function AdminSidebar({
   name,
   email,
   collapsed,
+  compact = false,
   onToggleCollapsed,
   onNavigate,
   onSignOut,
@@ -43,6 +44,7 @@ export function AdminSidebar({
   name: string;
   email: string;
   collapsed: boolean;
+  compact?: boolean;
   onToggleCollapsed?: (() => void) | undefined;
   onNavigate?: (() => void) | undefined;
   onSignOut: () => void;
@@ -151,7 +153,8 @@ export function AdminSidebar({
               aria-current={active ? "page" : undefined}
               title={collapsed ? item.label : undefined}
               className={cn(
-                "relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition",
+                "relative flex items-center gap-3 rounded-xl px-3 font-medium transition",
+                compact ? "py-2 text-xs" : "py-2.5 text-sm",
                 collapsed && "w-10 justify-center px-0",
                 active ? "nav-teal-active" : "nav-teal",
               )}

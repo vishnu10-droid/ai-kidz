@@ -118,7 +118,7 @@ function ProgramPage() {
         <SectionHeading eyebrow="Courses" title={`${p.name} courses`} />
         {courses.length ? (
           <Stagger className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {courses.map((c) => <StaggerItem key={c.id}><CourseCard course={c} /></StaggerItem>)}
+            {courses.map((c) => <StaggerItem key={c.id}><CourseCard course={c} showFee={false} /></StaggerItem>)}
           </Stagger>
         ) : (
           <p className="text-center text-muted-foreground">New courses coming soon.</p>

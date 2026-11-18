@@ -110,15 +110,26 @@ const COLLAPSE_KEY = "aikidz-dashboard-collapsed";
 export function DashboardShell({
   role,
   title,
+  displayTitle,
   subtitle,
+  displaySubtitle,
   actions,
   children,
+  searchPlaceholder,
+  headerVariant = "glass",
 }: {
   role: AppRole;
   title: string;
+  /** Optional presentation title while retaining a stable semantic page title. */
+  displayTitle?: ReactNode;
   subtitle?: ReactNode;
+  displaySubtitle?: ReactNode;
   actions?: ReactNode;
   children: ReactNode;
+  /** Overrides the topbar's search hint (e.g. admin's broader command search). */
+  searchPlaceholder?: string | undefined;
+  /** `plain` drops the glass title card and sits the heading directly on the mesh. */
+  headerVariant?: "glass" | "plain";
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { roles, profile, user, loading, signOut } = useAuth();
@@ -162,6 +173,7 @@ export function DashboardShell({
       name={name}
       email={email}
       collapsed={isCollapsed}
+      compact={role === "student"}
       onToggleCollapsed={options?.onToggle}
       onNavigate={options?.onNavigate}
       onSignOut={() => void signOut()}
@@ -194,6 +206,7 @@ export function DashboardShell({
             onOpenMenu={() => setMobileOpen(true)}
             onSignOut={() => void signOut()}
             notifications={<NotificationsBell />}
+            searchPlaceholder={searchPlaceholder}
           />
 
           <main className="mx-auto w-full max-w-[1560px] px-3 pb-10 pt-4 sm:px-5 lg:px-6 lg:pt-6">
@@ -220,13 +233,27 @@ export function DashboardShell({
               </div>
             ) : (
               <>
-                <div className="glass-panel glass-highlight mb-6 flex flex-wrap items-end justify-between gap-4 rounded-3xl border px-5 py-4">
-                  <div className="min-w-0">
-                    <h1 className="text-2xl font-extrabold sm:text-3xl">{title}</h1>
-                    {subtitle && <p className="mt-1 text-muted-foreground">{subtitle}</p>}
+                {headerVariant === "plain" ? (
+                  <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+                    <div className="min-w-0">
+                      <h1 className="text-2xl font-extrabold tracking-tight text-white drop-shadow-[0_2px_16px_rgba(4,40,55,0.45)] sm:text-[32px]">
+                        {displayTitle ?? title}
+                      </h1>
+                      {(displaySubtitle ?? subtitle) && (
+                        <p className="mt-1.5 text-sm font-medium text-white/75">{displaySubtitle ?? subtitle}</p>
+                      )}
+                    </div>
+                    {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
                   </div>
-                  {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
-                </div>
+                ) : (
+                  <div className="glass-panel glass-highlight mb-6 flex flex-wrap items-end justify-between gap-4 rounded-3xl border px-5 py-4">
+                    <div className="min-w-0">
+                      <h1 className="text-2xl font-extrabold sm:text-3xl">{displayTitle ?? title}</h1>
+                      {(displaySubtitle ?? subtitle) && <p className="mt-1 text-muted-foreground">{displaySubtitle ?? subtitle}</p>}
+                    </div>
+                    {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+                  </div>
+                )}
                 {children}
               </>
             )}
