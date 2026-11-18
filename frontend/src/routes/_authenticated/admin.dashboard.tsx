@@ -224,6 +224,14 @@ function AdminHeroBanner({
               <Store className="size-4" aria-hidden /> Manage Franchises
             </Link>
           </Button>
+          <Button
+            asChild
+            className="rounded-xl border-[#bdd6dc] bg-white/60 text-[#175166] hover:bg-white"
+          >
+            <Link to="/admin/courses">
+              <GraduationCap className="size-4" aria-hidden /> Manage Courses
+            </Link>
+          </Button>
         </div>
       </div>
 
@@ -263,39 +271,46 @@ function AdminTrialEnquiryCard({
   activeTrials,
   pendingTrials,
   pendingEnquiries,
+  trialsTrend,
+  enquiriesTrend,
 }: {
   activeTrials: number;
   pendingTrials: number;
   pendingEnquiries: number;
+  trialsTrend: number | null | undefined;
+  enquiriesTrend: number | null | undefined;
 }) {
   return (
-    <GlassCard className="p-4 sm:p-5">
-      <div className="flex items-start justify-between gap-3 mb-4">
-        <div>
-          <h3 className="font-display text-sm font-bold text-[#0b384a]">Free Trials &amp; Enquiries</h3>
-          <p className="mt-1 text-xs text-[#6b858d]">Bookings, leads and pipeline health.</p>
+    <Link to="/admin/trials" className="block rounded-3xl transition-transform hover:-translate-y-0.5">
+      <GlassCard className="p-4 sm:p-5">
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div>
+            <h3 className="font-display text-sm font-bold text-[#0b384a]">Free Trials &amp; Enquiries</h3>
+            <p className="mt-1 text-xs text-[#6b858d]">Bookings, leads and pipeline health.</p>
+          </div>
+          <span className="shrink-0 text-[11px] font-bold text-[#0d617c]">View trials →</span>
         </div>
-      </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <GlassStatCard
-          label="Active trials"
-          value={activeTrials}
-          icon={CalendarCheck}
-          tone="violet"
-          hint={`${pendingTrials} awaiting scheduling`}
-          trend={toTrend(100, "vs last 30 days")}
-        />
-        <GlassStatCard
-          label="Pending enquiries"
-          value={pendingEnquiries}
-          icon={Mail}
-          tone="sun"
-          hint="Waiting for a first reply"
-          trend={toTrend(100, "vs last 30 days")}
-        />
-      </div>
-    </GlassCard>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <GlassStatCard
+            label="Active trials"
+            value={activeTrials}
+            icon={CalendarCheck}
+            tone="violet"
+            hint={`${pendingTrials} awaiting scheduling`}
+            trend={toTrend(trialsTrend, "vs previous 30 days")}
+          />
+          <GlassStatCard
+            label="Pending enquiries"
+            value={pendingEnquiries}
+            icon={Mail}
+            tone="sun"
+            hint="Waiting for a first reply"
+            trend={toTrend(enquiriesTrend, "vs previous 30 days")}
+          />
+        </div>
+      </GlassCard>
+    </Link>
   );
 }
 
@@ -850,6 +865,8 @@ function AdminDashboard() {
                 activeTrials={kpis.activeTrials}
                 pendingTrials={kpis.pendingTrials}
                 pendingEnquiries={kpis.pendingEnquiries}
+                trialsTrend={data.trends.trials}
+                enquiriesTrend={data.trends.enquiries}
               />
               <AdminSchoolFranchiseCard
                 schools={kpis.schools}

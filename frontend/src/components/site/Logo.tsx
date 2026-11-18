@@ -32,7 +32,7 @@ export function Logo({
             light ? "text-navy-foreground/65" : "text-muted-foreground",
           )}
         >
-          Powered by AI Scholars
+          by AI Scholars
         </span>
       )}
     </Link>

@@ -345,6 +345,21 @@ const Enquiry = model("Enquiry", {
   school_id: ref("School"),
 });
 
+const BlogPost = model("BlogPost", {
+  title: { type: String, required: true, trim: true },
+  slug: { type: String, required: true, unique: true, lowercase: true, trim: true },
+  excerpt: String,
+  content: String,
+  cover_image: String,
+  category: { type: String, default: "News" },
+  author: { type: String, default: "AIKIDZ Team" },
+  tags: [String],
+  is_published: { type: Boolean, default: true },
+  published_at: { type: Date, default: Date.now },
+  read_minutes: { type: Number, default: 4 },
+  views: { type: Number, default: 0 },
+});
+
 const TrialBooking = model("TrialBooking", {
   parent_name: { type: String, required: true, trim: true },
   child_name: { type: String, required: true, trim: true },
@@ -392,5 +407,6 @@ module.exports = {
   OrderItem,
   Enquiry,
   TrialBooking,
+  BlogPost,
   roles,
 };

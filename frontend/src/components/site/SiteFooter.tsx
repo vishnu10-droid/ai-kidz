@@ -57,6 +57,7 @@ export function SiteFooter() {
               ["About Us", "/about"],
               ["Learning Center", "/learning-center"],
               ["BixCode", "/bixcode"],
+              ["Blog", "/blog"],
               ["Shop", "/shop"],
               ["Book a Free Trial", "/book-free-trial"],
               ["Contact Us", "/contact-us"],

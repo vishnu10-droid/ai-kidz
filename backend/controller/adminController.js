@@ -12,6 +12,11 @@ const {
   Assignment,
   Notification,
   TrialBooking,
+  Course,
+  CourseCategory,
+  CourseModule,
+  Lesson,
+  BlogPost,
   roles,
 } = require("../models");
 const bcrypt = require("bcryptjs");
@@ -665,6 +670,287 @@ exports.createStaff = async (req, res, next) => {
     );
 
     return res.status(201).json(withId(user.toObject()));
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/* ---------------------------------------------------------- course admin */
+
+const slugify = (value) =>
+  String(value || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+const categoryLite = (category) =>
+  category ? { id: String(category._id), name: category.name, slug: category.slug } : null;
+
+function courseAdminLite(course, counts = {}) {
+  return {
+    id: String(course._id),
+    title: course.title,
+    slug: course.slug,
+    short_description: course.short_description ?? null,
+    description: course.description ?? null,
+    image_url: course.image_url ?? null,
+    age_group: course.age_group ?? null,
+    duration: course.duration ?? null,
+    level: course.level ?? "Beginner",
+    price: Number(course.price || 0),
+    syllabus: course.syllabus ?? [],
+    is_published: course.is_published !== false,
+    category: categoryLite(course.category_id),
+    category_id: course.category_id ? String(course.category_id._id || course.category_id) : null,
+    modules: counts.modules ?? 0,
+    lessons: counts.lessons ?? 0,
+    createdAt: course.createdAt ? new Date(course.createdAt).toISOString() : null,
+  };
+}
+
+async function courseCounts(courseIds) {
+  const ids = courseIds.map(String);
+  const [modules, lessons] = await Promise.all([
+    CourseModule.find({ course_id: { $in: ids } }).select("course_id").lean(),
+    Lesson.find({ course_id: { $in: ids } }).select("course_id").lean(),
+  ]);
+  const tally = (rows) => {
+    const map = new Map();
+    for (const row of rows) {
+      const key = String(row.course_id);
+      map.set(key, (map.get(key) ?? 0) + 1);
+    }
+    return map;
+  };
+  return { modules: tally(modules), lessons: tally(lessons) };
+}
+
+async function resolveCategory(value) {
+  if (!value) return undefined;
+  const bySlug = await CourseCategory.findOne({ slug: String(value).trim().toLowerCase() }).select("_id").lean();
+  if (bySlug) return bySlug._id;
+  if (String(value).match(/^[a-f\d]{24}$/i)) {
+    const byId = await CourseCategory.findById(value).select("_id").lean();
+    if (byId) return byId._id;
+  }
+  return undefined;
+}
+
+const courseFields = (body, includeCategory = true) => {
+  const fields = {};
+  for (const key of [
+    "title", "slug", "short_description", "description", "image_url",
+    "age_group", "duration", "level",
+  ]) {
+    if (body[key] !== undefined) fields[key] = body[key];
+  }
+  if (body.price !== undefined) fields.price = Math.max(0, Number(body.price) || 0);
+  if (body.is_published !== undefined) {
+    fields.is_published = body.is_published === true || body.is_published === "true" || body.is_published === "published";
+  }
+  if (body.syllabus !== undefined) {
+    fields.syllabus = Array.isArray(body.syllabus)
+      ? body.syllabus
+      : String(body.syllabus).split(/\r?\n|,/).map((item) => item.trim()).filter(Boolean);
+  }
+  if (includeCategory && body.category !== undefined) fields.category_id = body.category;
+  if (includeCategory && body.category_id !== undefined) fields.category_id = body.category_id;
+  return fields;
+};
+
+/** GET /api/admin/courses — every course, published or draft. */
+exports.listCourses = async (_req, res, next) => {
+  try {
+    const courses = await Course.find().populate("category_id").sort("-createdAt").lean();
+    const counts = await courseCounts(courses.map((c) => c._id));
+    return res.json(
+      courses.map((course) =>
+        courseAdminLite(course, {
+          modules: counts.modules.get(String(course._id)) ?? 0,
+          lessons: counts.lessons.get(String(course._id)) ?? 0,
+        }),
+      ),
+    );
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/** GET /api/admin/courses/categories */
+exports.listCourseCategories = async (_req, res, next) => {
+  try {
+    const categories = await CourseCategory.find().sort({ position: 1, name: 1 }).lean();
+    return res.json(withIds(categories));
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/** POST /api/admin/courses */
+exports.createCourse = async (req, res, next) => {
+  try {
+    if (!String(req.body.title || "").trim()) {
+      return res.status(400).json({ message: "Course title is required" });
+    }
+    const fields = courseFields(req.body);
+    let slug = slugify(fields.slug || fields.title);
+    if (!slug) return res.status(400).json({ message: "A valid course title or slug is required" });
+    if (await Course.exists({ slug })) {
+      return res.status(409).json({ message: "A course with that slug already exists" });
+    }
+    fields.slug = slug;
+    if (fields.category_id !== undefined) {
+      fields.category_id = await resolveCategory(fields.category_id);
+    }
+    const course = await Course.create(fields);
+    return res.status(201).json(courseAdminLite(course));
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/** PATCH /api/admin/courses/:id */
+exports.updateCourse = async (req, res, next) => {
+  try {
+    const course = await Course.findById(req.params.id);
+    if (!course) return res.status(404).json({ message: "Course not found" });
+
+    const fields = courseFields(req.body);
+    if (fields.slug !== undefined) {
+      fields.slug = slugify(fields.slug);
+      if (!fields.slug) return res.status(400).json({ message: "Invalid slug" });
+      const clash = await Course.exists({ slug: fields.slug, _id: { $ne: course._id } });
+      if (clash) return res.status(409).json({ message: "A course with that slug already exists" });
+    }
+    if (fields.category_id !== undefined) fields.category_id = await resolveCategory(fields.category_id);
+
+    Object.assign(course, fields);
+    await course.save();
+    await course.populate("category_id");
+    const counts = await courseCounts([course._id]);
+    return res.json(
+      courseAdminLite(course.toObject(), {
+        modules: counts.modules.get(String(course._id)) ?? 0,
+        lessons: counts.lessons.get(String(course._id)) ?? 0,
+      }),
+    );
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/** DELETE /api/admin/courses/:id */
+exports.deleteCourse = async (req, res, next) => {
+  try {
+    const course = await Course.findByIdAndDelete(req.params.id);
+    if (!course) return res.status(404).json({ message: "Course not found" });
+    await Promise.all([
+      CourseModule.deleteMany({ course_id: course._id }),
+      Lesson.deleteMany({ course_id: course._id }),
+    ]);
+    return res.json({ message: "Course deleted" });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/* ------------------------------------------------------------ blog admin */
+
+const blogLite = (post) => ({
+  id: String(post._id),
+  title: post.title,
+  slug: post.slug,
+  excerpt: post.excerpt ?? null,
+  content: post.content ?? "",
+  cover_image: post.cover_image ?? null,
+  category: post.category ?? "News",
+  author: post.author ?? "AIKIDZ Team",
+  tags: post.tags ?? [],
+  is_published: post.is_published !== false,
+  published_at: (post.published_at || post.createdAt || new Date()).toISOString(),
+  read_minutes: post.read_minutes ?? 4,
+  views: post.views ?? 0,
+  createdAt: post.createdAt ? new Date(post.createdAt).toISOString() : null,
+});
+
+const blogFields = (body) => {
+  const fields = {};
+  for (const key of ["title", "slug", "excerpt", "content", "cover_image", "category", "author", "read_minutes"]) {
+    if (body[key] !== undefined) fields[key] = body[key];
+  }
+  if (body.read_minutes !== undefined) fields.read_minutes = Math.max(1, Number(body.read_minutes) || 4);
+  if (body.tags !== undefined) {
+    fields.tags = Array.isArray(body.tags)
+      ? body.tags
+      : String(body.tags).split(/,|\r?\n/).map((tag) => tag.trim()).filter(Boolean);
+  }
+  if (body.is_published !== undefined) {
+    fields.is_published = body.is_published === true || body.is_published === "true" || body.is_published === "published";
+  }
+  if (body.published_at !== undefined && body.published_at) fields.published_at = new Date(body.published_at);
+  return fields;
+};
+
+/** GET /api/admin/blogs — every post, including drafts. */
+exports.listBlogs = async (_req, res, next) => {
+  try {
+    const posts = await BlogPost.find().sort("-published_at").lean();
+    return res.json(posts.map(blogLite));
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/** POST /api/admin/blogs */
+exports.createBlog = async (req, res, next) => {
+  try {
+    if (!String(req.body.title || "").trim()) {
+      return res.status(400).json({ message: "Blog title is required" });
+    }
+    const fields = blogFields(req.body);
+    const slug = slugify(fields.slug || fields.title);
+    if (!slug) return res.status(400).json({ message: "A valid blog title is required" });
+    if (await BlogPost.exists({ slug })) {
+      return res.status(409).json({ message: "A blog with that slug already exists" });
+    }
+    fields.slug = slug;
+    const post = await BlogPost.create(fields);
+    return res.status(201).json(blogLite(post.toObject()));
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/** PATCH /api/admin/blogs/:id */
+exports.updateBlog = async (req, res, next) => {
+  try {
+    const post = await BlogPost.findById(req.params.id);
+    if (!post) return res.status(404).json({ message: "Blog post not found" });
+
+    const fields = blogFields(req.body);
+    if (req.body.slug !== undefined) {
+      const slug = slugify(req.body.slug);
+      if (!slug) return res.status(400).json({ message: "Invalid slug" });
+      if (await BlogPost.exists({ slug, _id: { $ne: post._id } })) {
+        return res.status(409).json({ message: "A blog with that slug already exists" });
+      }
+      fields.slug = slug;
+    }
+    Object.assign(post, fields);
+    await post.save();
+    return res.json(blogLite(post.toObject()));
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/** DELETE /api/admin/blogs/:id */
+exports.deleteBlog = async (req, res, next) => {
+  try {
+    const post = await BlogPost.findByIdAndDelete(req.params.id);
+    if (!post) return res.status(404).json({ message: "Blog post not found" });
+    return res.json({ message: "Blog post deleted" });
   } catch (error) {
     return next(error);
   }

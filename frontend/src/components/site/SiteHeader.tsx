@@ -20,8 +20,7 @@ const NAV = [
   { label: "Franchise", to: "/franchisee" },
   { label: "Learning Center", to: "/learning-center" },
   { label: "BixCode", to: "/bixcode" },
-  { label: "Shop", to: "/shop" },
-  { label: "Contact Us", to: "/contact-us" },
+  { label: "Blog", to: "/blog" },
 ] as const;
 
 function isActive(pathname: string, to: string) {

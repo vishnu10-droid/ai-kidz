@@ -6,6 +6,7 @@ import {
   Building2,
   CalendarCheck,
   ClipboardList,
+  FileText,
   GraduationCap,
   LayoutDashboard,
   Mail,
@@ -84,6 +85,8 @@ export const DASH_NAV: Record<AppRole, AdminNavItem[]> = {
     { label: "Enquiries", href: "/admin/enquiries", icon: Mail },
     { label: "Schools", href: "/admin/schools", icon: School },
     { label: "Franchises", href: "/admin/franchises", icon: Store },
+    { label: "Courses", href: "/admin/courses", icon: BookOpen },
+    { label: "Blogs", href: "/admin/blogs", icon: FileText },
     { label: "Orders", href: "/admin/orders", icon: Package },
     { label: "Users & Roles", href: "/admin/users", icon: Users },
   ],
@@ -333,6 +336,8 @@ export function PendingApprovalNotice({
   const suspended = status === "suspended";
   return (
     <div
+
+    
       role="status"
       className={cn(
         "glass-panel mb-6 rounded-3xl border p-4 text-sm",

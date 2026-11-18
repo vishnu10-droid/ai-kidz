@@ -26,6 +26,8 @@ import { Route as SchoolRouteImport } from './routes/school'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as VerifyCertificateRouteImport } from './routes/verify-certificate'
 import { Route as AuthenticatedCheckoutRouteImport } from './routes/_authenticated/checkout'
+import { Route as BlogIndexRouteImport } from './routes/blog.index'
+import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as CoursesSlugRouteImport } from './routes/courses.$slug'
 import { Route as LearningCenterIndexRouteImport } from './routes/learning-center.index'
 import { Route as LearningCenterSlugRouteImport } from './routes/learning-center.$slug'
@@ -34,6 +36,8 @@ import { Route as ProgramsSlugRouteImport } from './routes/programs.$slug'
 import { Route as ShopIndexRouteImport } from './routes/shop.index'
 import { Route as ShopSlugRouteImport } from './routes/shop.$slug'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as AuthenticatedAdminBlogsRouteImport } from './routes/_authenticated/admin.blogs'
+import { Route as AuthenticatedAdminCoursesRouteImport } from './routes/_authenticated/admin.courses'
 import { Route as AuthenticatedAdminDashboardRouteImport } from './routes/_authenticated/admin.dashboard'
 import { Route as AuthenticatedAdminEnquiriesRouteImport } from './routes/_authenticated/admin.enquiries'
 import { Route as AuthenticatedAdminFranchisesRouteImport } from './routes/_authenticated/admin.franchises'
@@ -141,6 +145,16 @@ const AuthenticatedCheckoutRoute = AuthenticatedCheckoutRouteImport.update({
   path: '/checkout',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const BlogIndexRoute = BlogIndexRouteImport.update({
+  id: '/blog/',
+  path: '/blog/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/blog/$slug',
+  path: '/blog/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CoursesSlugRoute = CoursesSlugRouteImport.update({
   id: '/courses/$slug',
   path: '/courses/$slug',
@@ -181,6 +195,17 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/admin/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminBlogsRoute = AuthenticatedAdminBlogsRouteImport.update({
+  id: '/admin/blogs',
+  path: '/admin/blogs',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminCoursesRoute =
+  AuthenticatedAdminCoursesRouteImport.update({
+    id: '/admin/courses',
+    path: '/admin/courses',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminDashboardRoute =
   AuthenticatedAdminDashboardRouteImport.update({
     id: '/admin/dashboard',
@@ -329,13 +354,17 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/verify-certificate': typeof VerifyCertificateRoute
   '/checkout': typeof AuthenticatedCheckoutRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/courses/$slug': typeof CoursesSlugRoute
   '/learning-center/$slug': typeof LearningCenterSlugRoute
   '/programs/$slug': typeof ProgramsSlugRoute
   '/shop/$slug': typeof ShopSlugRoute
+  '/blog/': typeof BlogIndexRoute
   '/learning-center/': typeof LearningCenterIndexRoute
   '/programs/': typeof ProgramsIndexRoute
   '/shop/': typeof ShopIndexRoute
+  '/admin/blogs': typeof AuthenticatedAdminBlogsRoute
+  '/admin/courses': typeof AuthenticatedAdminCoursesRoute
   '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/admin/enquiries': typeof AuthenticatedAdminEnquiriesRoute
   '/admin/franchises': typeof AuthenticatedAdminFranchisesRoute
@@ -377,13 +406,17 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/verify-certificate': typeof VerifyCertificateRoute
   '/checkout': typeof AuthenticatedCheckoutRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/courses/$slug': typeof CoursesSlugRoute
   '/learning-center/$slug': typeof LearningCenterSlugRoute
   '/programs/$slug': typeof ProgramsSlugRoute
   '/shop/$slug': typeof ShopSlugRoute
+  '/blog': typeof BlogIndexRoute
   '/learning-center': typeof LearningCenterIndexRoute
   '/programs': typeof ProgramsIndexRoute
   '/shop': typeof ShopIndexRoute
+  '/admin/blogs': typeof AuthenticatedAdminBlogsRoute
+  '/admin/courses': typeof AuthenticatedAdminCoursesRoute
   '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/admin/enquiries': typeof AuthenticatedAdminEnquiriesRoute
   '/admin/franchises': typeof AuthenticatedAdminFranchisesRoute
@@ -427,13 +460,17 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/verify-certificate': typeof VerifyCertificateRoute
   '/_authenticated/checkout': typeof AuthenticatedCheckoutRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/courses/$slug': typeof CoursesSlugRoute
   '/learning-center/$slug': typeof LearningCenterSlugRoute
   '/programs/$slug': typeof ProgramsSlugRoute
   '/shop/$slug': typeof ShopSlugRoute
+  '/blog/': typeof BlogIndexRoute
   '/learning-center/': typeof LearningCenterIndexRoute
   '/programs/': typeof ProgramsIndexRoute
   '/shop/': typeof ShopIndexRoute
+  '/_authenticated/admin/blogs': typeof AuthenticatedAdminBlogsRoute
+  '/_authenticated/admin/courses': typeof AuthenticatedAdminCoursesRoute
   '/_authenticated/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/_authenticated/admin/enquiries': typeof AuthenticatedAdminEnquiriesRoute
   '/_authenticated/admin/franchises': typeof AuthenticatedAdminFranchisesRoute
@@ -477,13 +514,17 @@ export interface FileRouteTypes {
     | '/terms'
     | '/verify-certificate'
     | '/checkout'
+    | '/blog/$slug'
     | '/courses/$slug'
     | '/learning-center/$slug'
     | '/programs/$slug'
     | '/shop/$slug'
+    | '/blog/'
     | '/learning-center/'
     | '/programs/'
     | '/shop/'
+    | '/admin/blogs'
+    | '/admin/courses'
     | '/admin/dashboard'
     | '/admin/enquiries'
     | '/admin/franchises'
@@ -525,13 +566,17 @@ export interface FileRouteTypes {
     | '/terms'
     | '/verify-certificate'
     | '/checkout'
+    | '/blog/$slug'
     | '/courses/$slug'
     | '/learning-center/$slug'
     | '/programs/$slug'
     | '/shop/$slug'
+    | '/blog'
     | '/learning-center'
     | '/programs'
     | '/shop'
+    | '/admin/blogs'
+    | '/admin/courses'
     | '/admin/dashboard'
     | '/admin/enquiries'
     | '/admin/franchises'
@@ -574,13 +619,17 @@ export interface FileRouteTypes {
     | '/terms'
     | '/verify-certificate'
     | '/_authenticated/checkout'
+    | '/blog/$slug'
     | '/courses/$slug'
     | '/learning-center/$slug'
     | '/programs/$slug'
     | '/shop/$slug'
+    | '/blog/'
     | '/learning-center/'
     | '/programs/'
     | '/shop/'
+    | '/_authenticated/admin/blogs'
+    | '/_authenticated/admin/courses'
     | '/_authenticated/admin/dashboard'
     | '/_authenticated/admin/enquiries'
     | '/_authenticated/admin/franchises'
@@ -623,10 +672,12 @@ export interface RootRouteChildren {
   SchoolRoute: typeof SchoolRoute
   TermsRoute: typeof TermsRoute
   VerifyCertificateRoute: typeof VerifyCertificateRoute
+  BlogSlugRoute: typeof BlogSlugRoute
   CoursesSlugRoute: typeof CoursesSlugRoute
   LearningCenterSlugRoute: typeof LearningCenterSlugRoute
   ProgramsSlugRoute: typeof ProgramsSlugRoute
   ShopSlugRoute: typeof ShopSlugRoute
+  BlogIndexRoute: typeof BlogIndexRoute
   LearningCenterIndexRoute: typeof LearningCenterIndexRoute
   ProgramsIndexRoute: typeof ProgramsIndexRoute
   ShopIndexRoute: typeof ShopIndexRoute
@@ -753,6 +804,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCheckoutRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/blog/': {
+      id: '/blog/'
+      path: '/blog'
+      fullPath: '/blog/'
+      preLoaderRoute: typeof BlogIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/blog/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/courses/$slug': {
       id: '/courses/$slug'
       path: '/courses/$slug'
@@ -807,6 +872,20 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/blogs': {
+      id: '/_authenticated/admin/blogs'
+      path: '/admin/blogs'
+      fullPath: '/admin/blogs'
+      preLoaderRoute: typeof AuthenticatedAdminBlogsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/courses': {
+      id: '/_authenticated/admin/courses'
+      path: '/admin/courses'
+      fullPath: '/admin/courses'
+      preLoaderRoute: typeof AuthenticatedAdminCoursesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/dashboard': {
@@ -968,6 +1047,8 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCheckoutRoute: typeof AuthenticatedCheckoutRoute
+  AuthenticatedAdminBlogsRoute: typeof AuthenticatedAdminBlogsRoute
+  AuthenticatedAdminCoursesRoute: typeof AuthenticatedAdminCoursesRoute
   AuthenticatedAdminDashboardRoute: typeof AuthenticatedAdminDashboardRoute
   AuthenticatedAdminEnquiriesRoute: typeof AuthenticatedAdminEnquiriesRoute
   AuthenticatedAdminFranchisesRoute: typeof AuthenticatedAdminFranchisesRoute
@@ -995,6 +1076,8 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCheckoutRoute: AuthenticatedCheckoutRoute,
+  AuthenticatedAdminBlogsRoute: AuthenticatedAdminBlogsRoute,
+  AuthenticatedAdminCoursesRoute: AuthenticatedAdminCoursesRoute,
   AuthenticatedAdminDashboardRoute: AuthenticatedAdminDashboardRoute,
   AuthenticatedAdminEnquiriesRoute: AuthenticatedAdminEnquiriesRoute,
   AuthenticatedAdminFranchisesRoute: AuthenticatedAdminFranchisesRoute,
@@ -1040,10 +1123,12 @@ const rootRouteChildren: RootRouteChildren = {
   SchoolRoute: SchoolRoute,
   TermsRoute: TermsRoute,
   VerifyCertificateRoute: VerifyCertificateRoute,
+  BlogSlugRoute: BlogSlugRoute,
   CoursesSlugRoute: CoursesSlugRoute,
   LearningCenterSlugRoute: LearningCenterSlugRoute,
   ProgramsSlugRoute: ProgramsSlugRoute,
   ShopSlugRoute: ShopSlugRoute,
+  BlogIndexRoute: BlogIndexRoute,
   LearningCenterIndexRoute: LearningCenterIndexRoute,
   ProgramsIndexRoute: ProgramsIndexRoute,
   ShopIndexRoute: ShopIndexRoute,

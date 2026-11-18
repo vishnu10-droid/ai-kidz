@@ -31,6 +31,17 @@ router.patch("/orders/:id", controller.updateOrder);
 router.get("/enquiries", controller.listEnquiries);
 router.patch("/enquiries/:id", controller.updateEnquiry);
 
+router.get("/courses", controller.listCourses);
+router.get("/courses/categories", controller.listCourseCategories);
+router.post("/courses", controller.createCourse);
+router.patch("/courses/:id", controller.updateCourse);
+router.delete("/courses/:id", controller.deleteCourse);
+
+router.get("/blogs", controller.listBlogs);
+router.post("/blogs", controller.createBlog);
+router.patch("/blogs/:id", controller.updateBlog);
+router.delete("/blogs/:id", controller.deleteBlog);
+
 router.post("/notifications", controller.broadcast);
 
 module.exports = router;

@@ -34,6 +34,7 @@ const {
   OrderItem,
   Enquiry,
   TrialBooking,
+  BlogPost,
   CourseCategory,
   Course,
   CourseModule,
@@ -44,6 +45,13 @@ const {
 
 const HERO_IMAGE =
   "/__l5e/assets-v1/f5e2673e-fca8-48a5-baff-f41cad8724ed/hero-kids-robotics.jpg";
+
+const img = {
+  programRobotics: "/__l5e/assets-v1/ef93305e-d966-4246-a49b-f0132f41791e/program-robotics.jpg",
+  programAi: "/__l5e/assets-v1/0a9a877e-4eab-4dcf-ae4c-ded28a7db590/program-ai.jpg",
+  programCoding: "/__l5e/assets-v1/eeff49ac-ae71-4a82-b2a3-3cdeab4ca080/program-coding.jpg",
+  heroKidsRobotics: HERO_IMAGE,
+};
 
 const COURSE_CATEGORIES = [
   { name: "Robotics", slug: "robotics", description: "Build robots, circuits and intelligent machines.", position: 1 },
@@ -282,6 +290,7 @@ async function seed() {
     DiyKitGuide.deleteMany({}),
     Enquiry.deleteMany({}),
     TrialBooking.deleteMany({}),
+    BlogPost.deleteMany({}),
     OrderItem.deleteMany({}),
     Order.deleteMany({}),
     User.deleteMany({}),
@@ -813,6 +822,62 @@ async function seed() {
       createdAt: at(days, 9),
     })),
   );
+
+  console.log("Seeding blog posts...");
+  await BlogPost.insertMany([
+    {
+      title: "How Robotics Builds Problem-Solving Skills in Children",
+      slug: "how-robotics-builds-problem-solving-skills",
+      excerpt: "A robot never works on the first try — and that's exactly why it's such a powerful classroom tool.",
+      content:
+        "Robotics gives children a safe place to fail, retry and think again. When a line-follower misses the track, students debug the sensor, adjust the code and try a new angle.\n\nThat loop — build, test, improve — is the heart of computational thinking. It teaches patience, logical reasoning and the confidence that a difficult problem can be broken into smaller steps.\n\nAt AIKIDZ, every kit-based session ends with a reflection: what worked, what didn't, and what to try next. Those few minutes often matter more than the robot itself.",
+      cover_image: img.programRobotics,
+      category: "Robotics",
+      author: "AIKIDZ Team",
+      tags: ["robotics", "learning", "STEM"],
+      published_at: at(-2, 9),
+      read_minutes: 5,
+    },
+    {
+      title: "Inside Our AI for Kids Classroom",
+      slug: "inside-our-ai-for-kids-classroom",
+      excerpt: "From image recognition to smart chatbots, here's how we make artificial intelligence feel like play.",
+      content:
+        "Artificial intelligence sounds complicated, but children pick it up quickly when they can see it working. We start with simple image classification games, then move on to training a tiny model with their own examples.\n\nThe excitement when a student realises the computer learned from their data is hard to beat. It turns an abstract topic into something tangible and fun.\n\nOur mentors focus on the questions behind the code: What data did we use? Was it fair? What could go wrong? Those conversations build responsible young technologists.",
+      cover_image: img.programAi,
+      category: "AI",
+      author: "Neha Verma",
+      tags: ["AI", "classroom", "coding"],
+      published_at: at(-6, 9),
+      read_minutes: 4,
+    },
+    {
+      title: "Why We Love Block Coding for Beginners",
+      slug: "why-we-love-block-coding-for-beginners",
+      excerpt: "Scratch and block-based tools help young learners understand logic before syntax gets in the way.",
+      content:
+        "Typing code can be intimidating for a eight-year-old. Blocks remove spelling and syntax errors so the child can focus on the real idea: sequences, loops and conditions.\n\nOnce the logic clicks, moving to Python or C++ feels like learning a new accent rather than a brand-new language. We use that bridge deliberately across our curriculum.\n\nTry asking your child to explain their game's rules at dinner. If they can describe the loop out loud, they've understood the concept — no keyboard required.",
+      cover_image: img.programCoding,
+      category: "Coding",
+      author: "AIKIDZ Team",
+      tags: ["coding", "scratch", "beginners"],
+      published_at: at(-11, 9),
+      read_minutes: 3,
+    },
+    {
+      title: "A Parent's Guide to Choosing a STEM Program",
+      slug: "parents-guide-to-choosing-a-stem-program",
+      excerpt: "Five questions worth asking before you enrol your child in a robotics or coding course.",
+      content:
+        "A good STEM program is hands-on, not a lecture. Look for classes where children build something they can take home and explain.\n\nAsk about batch size, mentor background and how progress is shared with parents. Small groups mean every child gets time with the kit and the teacher.\n\nFinally, check whether mistakes are celebrated. The best learning happens when a child feels safe to try, fail and try again — and a good school will tell you exactly how they encourage that.",
+      cover_image: img.heroKidsRobotics,
+      category: "Parenting",
+      author: "AIKIDZ Team",
+      tags: ["parents", "STEM", "guide"],
+      published_at: at(-16, 9),
+      read_minutes: 6,
+    },
+  ]);
 
   await Notification.insertMany([
     { user_id: studentUser._id, title: "Assignment graded", message: "Motor wiring & driver test · 92/100. Excellent motor wiring!", link: "/student/assignments" },

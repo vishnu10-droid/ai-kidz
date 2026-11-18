@@ -38,6 +38,7 @@ app.use("/api/teacher", require("./routes/teacher"));
 app.use("/api/student", require("./routes/student"));
 app.use("/api/parent", require("./routes/parent"));
 app.use("/api/admin", require("./routes/admin"));
+app.use("/api/blogs", require("./routes/blog"));
 app.use("/api/orders", require("./routes/orders"));
 app.use("/api/enquiries", require("./routes/enquiries"));
 app.use("/api/certificates", require("./routes/certificates"));
