@@ -6,34 +6,34 @@ import { humanize } from "@/lib/admin-constants";
 import { cn } from "@/lib/utils";
 
 const TONES: Record<string, string> = {
-  new: "bg-primary/10 text-primary",
-  pending: "bg-sun/15 text-sun-foreground",
-  contacted: "bg-violet/10 text-violet",
-  follow_up: "bg-violet/10 text-violet",
-  scheduled: "bg-violet/10 text-violet",
-  placed: "bg-primary/10 text-primary",
-  confirmed: "bg-primary/10 text-primary",
-  packed: "bg-violet/10 text-violet",
-  shipped: "bg-primary/10 text-primary",
-  planned: "bg-violet/10 text-violet",
-  installing: "bg-sun/15 text-sun-foreground",
-  live: "bg-mint/15 text-mint",
-  present: "bg-mint/15 text-mint",
-  graded: "bg-mint/15 text-mint",
-  submitted: "bg-primary/10 text-primary",
-  late: "bg-sun/15 text-sun-foreground",
-  absent: "bg-destructive/10 text-destructive",
-  overdue: "bg-destructive/10 text-destructive",
-  attended: "bg-mint/15 text-mint",
-  converted: "bg-mint/15 text-mint",
-  approved: "bg-mint/15 text-mint",
-  active: "bg-mint/15 text-mint",
-  delivered: "bg-mint/15 text-mint",
-  paid: "bg-mint/15 text-mint",
-  cancelled: "bg-destructive/10 text-destructive",
-  rejected: "bg-destructive/10 text-destructive",
-  suspended: "bg-destructive/10 text-destructive",
-  failed: "bg-destructive/10 text-destructive",
+  new: "bg-premium-sky/10 text-premium-sky-deep",
+  pending: "bg-premium-gold/15 text-premium-gold-deep",
+  contacted: "bg-premium-sky/10 text-premium-sky-deep",
+  follow_up: "bg-premium-sky/10 text-premium-sky-deep",
+  scheduled: "bg-premium-sky/10 text-premium-sky-deep",
+  placed: "bg-premium-sky/10 text-premium-sky-deep",
+  confirmed: "bg-premium-sky/10 text-premium-sky-deep",
+  packed: "bg-premium-sky/10 text-premium-sky-deep",
+  shipped: "bg-premium-sky/10 text-premium-sky-deep",
+  planned: "bg-premium-sky/10 text-premium-sky-deep",
+  installing: "bg-premium-gold/15 text-premium-gold-deep",
+  live: "bg-premium-emerald/15 text-premium-emerald-deep",
+  present: "bg-premium-emerald/15 text-premium-emerald-deep",
+  graded: "bg-premium-emerald/15 text-premium-emerald-deep",
+  submitted: "bg-premium-sky/10 text-premium-sky-deep",
+  late: "bg-premium-gold/15 text-premium-gold-deep",
+  absent: "bg-premium-rose/10 text-premium-rose-deep",
+  overdue: "bg-premium-rose/10 text-premium-rose-deep",
+  attended: "bg-premium-emerald/15 text-premium-emerald-deep",
+  converted: "bg-premium-emerald/15 text-premium-emerald-deep",
+  approved: "bg-premium-emerald/15 text-premium-emerald-deep",
+  active: "bg-premium-emerald/15 text-premium-emerald-deep",
+  delivered: "bg-premium-emerald/15 text-premium-emerald-deep",
+  paid: "bg-premium-emerald/15 text-premium-emerald-deep",
+  cancelled: "bg-premium-rose/10 text-premium-rose-deep",
+  rejected: "bg-premium-rose/10 text-premium-rose-deep",
+  suspended: "bg-premium-rose/10 text-premium-rose-deep",
+  failed: "bg-premium-rose/10 text-premium-rose-deep",
 };
 
 export function StatusBadge({ value, className, labels }: { value: string; className?: string; labels?: Record<string, string> }) {
@@ -62,7 +62,7 @@ export function FilterBar({ search, onSearch, statuses, status, onStatus, counts
             type="button"
             aria-pressed={status === s}
             onClick={() => onStatus(s)}
-            className={cn("rounded-full border px-3 py-1 text-xs font-semibold transition", status === s ? "border-primary bg-primary text-primary-foreground" : "bg-card hover:border-primary/50")}
+            className={cn("rounded-full border px-3 py-1 text-xs font-semibold transition", status === s ? "border-transparent bg-gradient-premium text-white shadow-[0_8px_18px_-10px_rgba(14,165,233,0.8)]" : "bg-card hover:border-premium-sky/50")}
           >
             {s === "all" ? "All" : humanize(s, labels)} <span className="opacity-70">{s === "all" ? total : (counts[s] ?? 0)}</span>
           </button>

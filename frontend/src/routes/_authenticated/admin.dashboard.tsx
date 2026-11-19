@@ -18,6 +18,7 @@ import { DashboardShell, Panel } from "@/components/dash/DashboardShell";
 import { GlassCard, GlassStatCard, type Trend } from "@/components/dash/Glass";
 import { StatusBadge } from "@/components/dash/AdminBits";
 import { dashQuery, money, dateLabel } from "@/lib/dash.api";
+import { cn } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 import { pageMeta } from "@/lib/seo";
 
@@ -196,11 +197,11 @@ function AdminHeroBanner({
 
       <div className="relative z-10 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
         <div className="min-w-0">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#167894]/20 bg-[#167894]/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#0d617c]">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-premium-emerald/25 bg-premium-emerald/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-premium-emerald-deep shadow-[0_0_20px_-8px_rgba(16,185,129,0.7)]">
             <School className="size-3.5" aria-hidden /> AIKIDZ Command Center
           </span>
-          <h2 className="mt-2 font-display text-2xl font-extrabold leading-tight text-[#0b384a] sm:text-3xl">
-            Platform overview
+          <h2 className="mt-2 font-display text-2xl font-extrabold leading-tight text-[#0f2b3f] sm:text-3xl">
+            Platform <span className="text-gradient-premium">overview</span>
           </h2>
           <p className="mt-1.5 text-sm text-[#5c7880]">
             Quick stats and one-click actions for onboarding partners and managing the network.
@@ -210,7 +211,7 @@ function AdminHeroBanner({
         <div className="flex flex-wrap gap-2">
           <Button
             asChild
-            className="rounded-xl bg-[#0b384a] text-white shadow-[0_16px_32px_-18px_rgba(4,40,55,0.9)] hover:bg-[#0d4a60]"
+            className="rounded-xl bg-gradient-premium text-white shadow-[0_16px_32px_-16px_rgba(14,165,233,0.75)] transition hover:brightness-110 hover:shadow-[0_18px_38px_-14px_rgba(16,185,129,0.8)]"
           >
             <Link to="/admin/schools">
               <School className="size-4" aria-hidden /> Manage Schools
@@ -218,7 +219,7 @@ function AdminHeroBanner({
           </Button>
           <Button
             asChild
-            className="rounded-xl border-[#bdd6dc] bg-white/60 text-[#175166] hover:bg-white"
+            className="rounded-xl border-premium-sky/25 bg-white/60 text-premium-sky-deep hover:bg-white"
           >
             <Link to="/admin/franchises">
               <Store className="size-4" aria-hidden /> Manage Franchises
@@ -226,7 +227,7 @@ function AdminHeroBanner({
           </Button>
           <Button
             asChild
-            className="rounded-xl border-[#bdd6dc] bg-white/60 text-[#175166] hover:bg-white"
+            className="rounded-xl border-premium-sky/25 bg-white/60 text-premium-sky-deep hover:bg-white"
           >
             <Link to="/admin/courses">
               <GraduationCap className="size-4" aria-hidden /> Manage Courses
@@ -237,23 +238,27 @@ function AdminHeroBanner({
 
       <div className="mt-5 flex flex-wrap gap-2 text-xs font-semibold">
         <span
-          className={`glass-tile inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[#175166] ${
-            pendingSchools > 0 ? "border-[#e0a34a]/30 text-[#9c691f]" : "border-[#167894]/20 text-[#0d617c]"
+          className={`glass-tile inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-premium-sky-deep ${
+            pendingSchools > 0
+              ? "border-premium-gold/35 text-premium-gold-deep"
+              : "border-premium-emerald/25 text-premium-emerald-deep"
           }`}
         >
           <span
-            className={`size-2 rounded-full ${pendingSchools > 0 ? "bg-[#e0a34a] animate-pulse" : "bg-[#167894]"}`}
+            className={`size-2 rounded-full ${pendingSchools > 0 ? "bg-premium-gold animate-pulse" : "bg-premium-emerald"}`}
             aria-hidden
           />
           {pendingSchools} school{pendingSchools === 1 ? "" : "s"} awaiting approval
         </span>
         <span
-          className={`glass-tile inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[#175166] ${
-            pendingFranchises > 0 ? "border-[#597ab3]/30 text-[#456797]" : "border-[#167894]/20 text-[#0d617c]"
+          className={`glass-tile inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-premium-sky-deep ${
+            pendingFranchises > 0
+              ? "border-premium-rose/30 text-premium-rose-deep"
+              : "border-premium-emerald/25 text-premium-emerald-deep"
           }`}
         >
           <span
-            className={`size-2 rounded-full ${pendingFranchises > 0 ? "bg-[#597ab3] animate-pulse" : "bg-[#167894]"}`}
+            className={`size-2 rounded-full ${pendingFranchises > 0 ? "bg-premium-rose animate-pulse" : "bg-premium-emerald"}`}
             aria-hidden
           />
           {pendingFranchises} franchise{pendingFranchises === 1 ? "" : "s"} pending
@@ -285,10 +290,10 @@ function AdminTrialEnquiryCard({
       <GlassCard className="p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3 mb-4">
           <div>
-            <h3 className="font-display text-sm font-bold text-[#0b384a]">Free Trials &amp; Enquiries</h3>
+            <h3 className="font-display text-sm font-bold text-[#0f2b3f]">Free Trials &amp; Enquiries</h3>
             <p className="mt-1 text-xs text-[#6b858d]">Bookings, leads and pipeline health.</p>
           </div>
-          <span className="shrink-0 text-[11px] font-bold text-[#0d617c]">View trials →</span>
+          <span className="shrink-0 text-[11px] font-bold text-premium-sky-deep">View trials →</span>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
@@ -333,7 +338,7 @@ function AdminSchoolFranchiseCard({
     <GlassCard className="p-4 sm:p-5">
       <div className="flex items-start justify-between gap-3 mb-4">
         <div>
-          <h3 className="font-display text-sm font-bold text-[#0b384a]">Schools &amp; Franchises</h3>
+          <h3 className="font-display text-sm font-bold text-[#0f2b3f]">Schools &amp; Franchises</h3>
           <p className="mt-1 text-xs text-[#6b858d]">Partner onboarding and active network nodes.</p>
         </div>
       </div>
@@ -379,7 +384,7 @@ function AdminImpactEngagementCard({
     <GlassCard className="p-4 sm:p-5">
       <div className="flex items-start justify-between gap-3 mb-4">
         <div>
-          <h3 className="font-display text-sm font-bold text-[#0b384a]">Impact &amp; Engagement</h3>
+          <h3 className="font-display text-sm font-bold text-[#0f2b3f]">Impact &amp; Engagement</h3>
           <p className="mt-1 text-xs text-[#6b858d]">Student participation and course completion.</p>
         </div>
       </div>
@@ -388,17 +393,21 @@ function AdminImpactEngagementCard({
         {[
           { label: "Active learners", value: students, icon: GraduationCap, tone: "mint" },
           { label: "Teaching staff", value: teachers, icon: Video, tone: "primary" },
-          { label: "Live batches", value: batches, icon: CalendarCheck, tone: "violet" },
+          { label: "Live batches", value: batches, icon: CalendarCheck, tone: "sun" },
         ].map((item) => (
           <div key={item.label} className="space-y-2">
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs font-semibold text-[#174656]">{item.label}</span>
-              <span className="text-xs font-bold tabular-nums text-[#0b384a]">{item.value}</span>
+              <span className="text-xs font-bold tabular-nums text-[#0f2b3f]">{item.value}</span>
             </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-[#0b384a]/10 ring-1 ring-inset ring-border/50">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-premium-sky/10 ring-1 ring-inset ring-border/50">
               <div
                 className={`h-full rounded-full transition-all duration-700 ${
-                  item.tone === "mint" ? "bg-mint" : item.tone === "primary" ? "bg-primary" : "bg-violet"
+                  item.tone === "mint"
+                    ? "bg-premium-emerald"
+                    : item.tone === "primary"
+                      ? "bg-premium-sky"
+                      : "bg-premium-gold"
                 }`}
                 style={{ width: `${meter(item.value)}%` }}
               />
@@ -433,7 +442,7 @@ function AdminOrdersRevenueCard({
     <GlassCard className="p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
         <div>
-          <h3 className="font-display text-sm font-bold text-[#0b384a]">Orders &amp; Revenue</h3>
+          <h3 className="font-display text-sm font-bold text-[#0f2b3f]">Orders &amp; Revenue</h3>
           <p className="mt-1 text-xs text-[#6b858d]">Store payments and monetization counts.</p>
         </div>
         <div
@@ -452,7 +461,7 @@ function AdminOrdersRevenueCard({
               aria-pressed={range === item.value}
               className={`rounded-full px-3 py-1 text-xs font-bold transition ${
                 range === item.value
-                  ? "bg-[#0b384a] text-white shadow-soft"
+                  ? "bg-gradient-premium text-white shadow-[0_8px_20px_-8px_rgba(14,165,233,0.85)]"
                   : "text-[#3f6672] hover:bg-white/60"
               }`}
             >
@@ -466,13 +475,13 @@ function AdminOrdersRevenueCard({
         <div className="glass-tile rounded-2xl border p-4 flex items-center justify-between">
           <div className="min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#6b858d]">Total revenue</p>
-            <p className="mt-1 font-display text-2xl font-extrabold text-[#0b384a] tabular-nums">
+            <p className="mt-1 font-display text-2xl font-extrabold text-[#0f2b3f] tabular-nums">
               {money(totals.revenue)}
             </p>
           </div>
           <div className="text-right">
             <span className={`text-[10px] font-bold ${
-              (change.revenue ?? 0) >= 0 ? "text-[#177767]" : "text-[#b42318]"
+              (change.revenue ?? 0) >= 0 ? "text-premium-emerald-deep" : "text-premium-rose-deep"
             }`}>
               {change.revenue != null ? `${change.revenue > 0 ? "+" : ""}${change.revenue}%` : "—"}
             </span>
@@ -482,13 +491,13 @@ function AdminOrdersRevenueCard({
         <div className="glass-tile rounded-2xl border p-4 flex items-center justify-between">
           <div className="min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#6b858d]">Total orders</p>
-            <p className="mt-1 font-display text-2xl font-extrabold text-[#0b384a] tabular-nums">
+            <p className="mt-1 font-display text-2xl font-extrabold text-[#0f2b3f] tabular-nums">
               {totals.orders}
             </p>
           </div>
           <div className="text-right">
             <span className={`text-[10px] font-bold ${
-              (change.orders ?? 0) >= 0 ? "text-[#177767]" : "text-[#b42318]"
+              (change.orders ?? 0) >= 0 ? "text-premium-emerald-deep" : "text-premium-rose-deep"
             }`}>
               {change.orders != null ? `${change.orders > 0 ? "+" : ""}${change.orders}%` : "—"}
             </span>
@@ -511,7 +520,7 @@ function AdminOrdersRevenueCard({
                 style={{ flex: "1 1 0%" }}
               >
                 <div
-                  className="w-full rounded-t-md bg-[#0f7c99] shadow-[0_0_12px_rgba(15,124,153,0.35)] transition-all duration-500"
+                  className="w-full rounded-t-md bg-gradient-to-t from-premium-emerald via-premium-sky to-[#7dd3fc] shadow-[0_0_16px_rgba(14,165,233,0.45)] transition-all duration-500"
                   style={{ height: `${pct}%` }}
                 />
                 <span className="text-[10px] leading-none text-[#6b858d]">{point.label}</span>
@@ -528,23 +537,35 @@ function AdminOrdersRevenueCard({
    Pro / Upgrade Card
    ======================================================================== */
 
+const STATUS_TONES = [
+  "border-premium-emerald/25 bg-premium-emerald/10 text-premium-emerald-deep",
+  "border-premium-sky/25 bg-premium-sky/10 text-premium-sky-deep",
+  "border-premium-gold/25 bg-premium-gold/10 text-premium-gold-deep",
+  "border-premium-rose/25 bg-premium-rose/10 text-premium-rose-deep",
+];
+
 function AdminProUpgradeCard() {
   return (
     <GlassCard className="p-4 sm:p-5">
       <div className="flex items-start justify-between gap-3 mb-4">
         <div>
-          <h3 className="font-display text-sm font-bold text-[#0b384a]">System Status</h3>
+          <h3 className="font-display text-sm font-bold text-[#0f2b3f]">System Status</h3>
           <p className="mt-1 text-xs text-[#6b858d]">Platform health and management shortcuts.</p>
         </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        {["System health", "Sync status", "Backup", "Uptime"].map((label) => (
+        {["System health", "Sync status", "Backup", "Uptime"].map((label, index) => (
           <div
             key={label}
             className="glass-tile rounded-2xl border p-3 flex items-center gap-3 hover:bg-white/40 transition-colors"
           >
-            <div className="grid size-8 shrink-0 place-items-center rounded-lg border border-[#167894]/20 bg-[#167894]/10 text-[#0d617c]">
+            <div
+              className={cn(
+                "grid size-8 shrink-0 place-items-center rounded-lg border",
+                STATUS_TONES[index % STATUS_TONES.length],
+              )}
+            >
               <TrendingUp className="size-3.5" aria-hidden />
             </div>
             <div className="min-w-0">
@@ -566,7 +587,7 @@ function AdminProUpgradeCard() {
             asChild
             variant="outline"
             size="sm"
-            className="rounded-xl border-[#bdd6dc] bg-white/60 text-[#175166] w-full justify-start text-sm"
+            className="rounded-xl border-premium-sky/25 bg-white/60 text-premium-sky-deep w-full justify-start text-sm"
           >
             <Link to="/admin/users">
               <Users className="size-3.5 mr-2" aria-hidden /> Invite staff
@@ -576,7 +597,7 @@ function AdminProUpgradeCard() {
             asChild
             variant="outline"
             size="sm"
-            className="rounded-xl border-[#bdd6dc] bg-white/60 text-[#175166] w-full justify-start text-sm"
+            className="rounded-xl border-premium-sky/25 bg-white/60 text-premium-sky-deep w-full justify-start text-sm"
           >
             <Link to="/admin/orders">
               <Package className="size-3.5 mr-2" aria-hidden /> Review orders
@@ -601,16 +622,16 @@ function AdminMiniCalendar() {
 
   return (
     <GlassCard className="p-4 sm:p-5">
-      <h3 className="font-display text-sm font-bold text-[#0b384a] mb-3">Mini Calendar</h3>
+      <h3 className="font-display text-sm font-bold text-[#0f2b3f] mb-3">Mini Calendar</h3>
       <div className="glass-tile rounded-2xl border p-4">
         <div className="flex items-center justify-between mb-3">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#6b858d]">{month}</p>
-            <p className="mt-0.5 font-display text-2xl font-extrabold tabular-nums text-[#0b384a]">
+            <p className="mt-0.5 font-display text-2xl font-extrabold tabular-nums text-[#0f2b3f]">
               {day}
             </p>
           </div>
-          <span className="grid size-8 place-items-center rounded-full border border-[#167894]/20 bg-[#167894]/10 text-[10px] font-bold text-[#0d617c]">
+          <span className="grid size-8 place-items-center rounded-full border border-premium-sky/25 bg-premium-sky/10 text-[10px] font-bold text-premium-sky-deep">
             {weekday}
           </span>
         </div>
@@ -619,7 +640,9 @@ function AdminMiniCalendar() {
             <div
               key={d}
               className={`text-[10px] text-center font-semibold ${
-                d === weekday ? "text-[#0b384a] bg-[#0b384a]/10 rounded-lg" : "text-[#6b858d]"
+                d === weekday
+                  ? "text-premium-emerald-deep bg-premium-emerald/12 rounded-lg"
+                  : "text-[#6b858d]"
               }`}
             >
               {d}
@@ -645,7 +668,7 @@ function AdminRecentOrdersEnquiries({
   return (
     <GlassCard className="p-4 sm:p-5">
       <div className="flex items-start justify-between gap-3 mb-3">
-        <h3 className="font-display text-sm font-bold text-[#0b384a]">Recent Orders &amp; Enquiries</h3>
+        <h3 className="font-display text-sm font-bold text-[#0f2b3f]">Recent Orders &amp; Enquiries</h3>
       </div>
 
       <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
@@ -667,7 +690,7 @@ function AdminRecentOrdersEnquiries({
               </p>
             </div>
             <div className="text-right">
-              <p className="text-sm font-bold tabular-nums text-[#0b384a]">{money(order.total)}</p>
+              <p className="text-sm font-bold tabular-nums text-[#0f2b3f]">{money(order.total)}</p>
               <StatusBadge value={order.payment_status ?? "pending"} />
             </div>
           </div>
@@ -709,7 +732,7 @@ function AdminNotificationsFeed({
     <GlassCard className="p-4 sm:p-5">
       <div className="flex items-start justify-between gap-2 mb-3">
         <div>
-          <h3 className="font-display text-sm font-bold text-[#0b384a]">Notifications</h3>
+          <h3 className="font-display text-sm font-bold text-[#0f2b3f]">Notifications</h3>
           <p className="mt-0.5 text-xs text-[#6b858d]">System alerts and platform activity.</p>
         </div>
       </div>
@@ -718,13 +741,13 @@ function AdminNotificationsFeed({
         <button
           type="button"
           onClick={onRefresh}
-          className="text-[10px] font-bold text-[#0d617c] hover:underline"
+          className="text-[10px] font-bold text-premium-sky-deep hover:underline"
           aria-label="Refresh notifications"
         >
           <RefreshCw className="size-3 inline" aria-hidden /> Refresh
         </button>
         {unreadCount > 0 && (
-          <span className="rounded-full bg-[#e07a5f]/20 px-2 py-0.5 text-[10px] font-bold text-[#b42318]">
+          <span className="rounded-full bg-premium-rose/15 px-2 py-0.5 text-[10px] font-bold text-premium-rose-deep">
             {unreadCount} unread
           </span>
         )}
@@ -737,12 +760,12 @@ function AdminNotificationsFeed({
           notifications.map((notification) => (
             <div
               key={notification.id}
-              className="glass-tile rounded-2xl border p-3 text-left transition hover:border-[#167894]/40 hover:bg-white/60"
+              className="glass-tile rounded-2xl border p-3 text-left transition hover:border-premium-sky/40 hover:bg-white/60"
             >
               <div className="flex items-start gap-2">
                 <span
                   className={`mt-1 size-2 shrink-0 rounded-full ${
-                    notification.read ? "bg-[#0b384a]/15" : "bg-[#127491]"
+                    notification.read ? "bg-premium-sky/20" : "bg-premium-sky"
                   }`}
                   aria-hidden
                 />

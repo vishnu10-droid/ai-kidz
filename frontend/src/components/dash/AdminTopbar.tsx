@@ -172,7 +172,7 @@ export function AdminTopbar({
               className="glass-tile flex items-center gap-2 rounded-full border p-1 pr-1.5 transition hover:border-white/30 sm:pr-2.5"
               aria-label="Open account menu"
             >
-              <span className="grid size-7 place-items-center rounded-full bg-[linear-gradient(135deg,#55a8c2_0%,#127491_100%)] text-[11px] font-bold text-white">
+              <span className="grid size-7 place-items-center rounded-full bg-[linear-gradient(135deg,#0ea5e9_0%,#10b981_100%)] text-[11px] font-bold text-white">
                 {initials(name, email)}
               </span>
               <span className="hidden max-w-32 truncate text-xs font-semibold text-white sm:inline">
@@ -185,7 +185,7 @@ export function AdminTopbar({
             <DropdownMenuLabel className="font-normal">
               <div className="truncate text-sm font-semibold">{name || "Account"}</div>
               <div className="truncate text-xs text-muted-foreground">{email}</div>
-              <span className="mt-2 inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">
+              <span className="mt-2 inline-flex rounded-full bg-premium-emerald/12 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-premium-emerald-deep">
                 {roleLabel}
               </span>
             </DropdownMenuLabel>

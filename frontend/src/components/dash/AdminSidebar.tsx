@@ -80,7 +80,7 @@ export function AdminSidebar({
         )}
       >
         {collapsed ? (
-          <span className="grid size-9 place-items-center rounded-xl bg-[linear-gradient(135deg,#55a8c2_0%,#127491_100%)] font-display text-sm font-extrabold text-white shadow-soft">
+          <span className="grid size-9 place-items-center rounded-xl bg-[linear-gradient(135deg,#0ea5e9_0%,#10b981_100%)] font-display text-sm font-extrabold text-white shadow-soft">
             A
           </span>
         ) : (
@@ -120,7 +120,7 @@ export function AdminSidebar({
           collapsed && "justify-center p-2",
         )}
       >
-        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[linear-gradient(135deg,#55a8c2_0%,#127491_100%)] text-white shadow-soft">
+        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[linear-gradient(135deg,#0ea5e9_0%,#10b981_100%)] text-white shadow-soft">
           <RoleIcon className="size-5" aria-hidden />
         </span>
         {!collapsed && (
@@ -162,7 +162,7 @@ export function AdminSidebar({
               {active && (
                 <span
                   aria-hidden
-                  className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-[#e6f4f8] shadow-[0_0_12px_rgba(230,244,248,0.9)]"
+                  className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-premium-emerald shadow-[0_0_12px_rgba(16,185,129,0.9)]"
                 />
               )}
               <item.icon
@@ -211,7 +211,7 @@ export function AdminSidebar({
             onClick={onSignOut}
             title="Sign out"
             className={cn(
-              "flex-1 justify-center gap-2 rounded-xl px-3 text-xs font-semibold text-white/70 hover:bg-red-400/15 hover:text-red-100",
+              "flex-1 justify-center gap-2 rounded-xl px-3 text-xs font-semibold text-white/70 hover:bg-premium-rose/20 hover:text-rose-100",
               collapsed && "w-10 flex-none px-0",
             )}
           >

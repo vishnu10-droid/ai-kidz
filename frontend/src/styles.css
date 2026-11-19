@@ -76,6 +76,20 @@
   --color-aurora-mint: #9fd0de;
   --color-aurora-ice: #e6f4f8;
   --color-aurora-ink: #0b384a;
+
+  /*
+   * Premium accent palette. Raw hex values generate bg-/text-/border-/from-*
+   * utilities (e.g. `bg-premium-emerald`, `text-premium-sky-deep`) so the
+   * dashboard can mix all four accents without relying on theme-token changes.
+   */
+  --color-premium-emerald: #10b981;
+  --color-premium-emerald-deep: #059669;
+  --color-premium-sky: #0ea5e9;
+  --color-premium-sky-deep: #0284c7;
+  --color-premium-rose: #f43f5e;
+  --color-premium-rose-deep: #e11d48;
+  --color-premium-gold: #f59e0b;
+  --color-premium-gold-deep: #d97706;
 }
 
 :root {
@@ -125,6 +139,25 @@
     color-mix(in oklab, var(--violet) 70%, transparent) 50%,
     color-mix(in oklab, var(--sun) 70%, transparent)
   );
+  /* Premium dashboard gradients: sky → emerald primary, gold → rose accents. */
+  --gradient-premium: linear-gradient(
+    135deg,
+    var(--color-premium-sky) 0%,
+    var(--color-premium-emerald) 100%
+  );
+  --gradient-premium-gold: linear-gradient(
+    135deg,
+    var(--color-premium-gold) 0%,
+    var(--color-premium-rose) 100%
+  );
+  --gradient-glow-border-premium: linear-gradient(
+    135deg,
+    var(--color-premium-emerald) 0%,
+    var(--color-premium-sky) 50%,
+    var(--color-premium-gold) 100%
+  );
+  --shadow-glow-emerald: 0 14px 40px -12px
+    color-mix(in oklab, var(--color-premium-emerald) 60%, transparent);
   --gradient-hero:
     radial-gradient(70% 60% at 85% 0%, oklch(0.88 0.09 290 / 0.55) 0%, transparent 60%),
     radial-gradient(55% 55% at 0% 20%, oklch(0.88 0.1 255 / 0.6) 0%, transparent 60%),
@@ -212,6 +245,41 @@
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+
+/* Premium dashboard accents — sky → emerald fill and gold → rose highlight. */
+@utility bg-gradient-premium {
+  background-image: var(--gradient-premium);
+}
+@utility bg-gradient-premium-gold {
+  background-image: var(--gradient-premium-gold);
+}
+@utility text-gradient-premium {
+  background-image: var(--gradient-premium);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+@utility shadow-glow-emerald {
+  box-shadow: var(--shadow-glow-emerald);
+}
+/* Elevated card with an emerald → sky → gold glowing border on hover. */
+@utility premium-glow-card {
+  transition:
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.35s ease,
+    border-color 0.35s ease;
+  &:hover,
+  &:focus-within {
+    border-color: transparent;
+    background:
+      linear-gradient(var(--card), var(--card)) padding-box,
+      var(--gradient-glow-border-premium) border-box;
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--color-premium-emerald) 12%, transparent),
+      0 26px 50px -22px color-mix(in oklab, var(--color-premium-sky) 45%, transparent),
+      0 12px 26px -16px color-mix(in oklab, var(--color-premium-emerald) 35%, transparent);
+  }
 }
 /* Card with a soft lift and a blue→purple→orange glowing border on hover. */
 @utility glow-card {

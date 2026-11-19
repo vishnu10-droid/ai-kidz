@@ -2,21 +2,25 @@ import { ArrowDownRight, ArrowUpRight, Minus, type LucideIcon } from "lucide-rea
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-/** Accent tones available in the AIKIDZ theme (primary, violet, sun, mint). */
+/**
+ * Accent tones for the premium dashboard palette.
+ * primary → sky, violet → rose, sun → gold, mint → emerald. The names are kept
+ * stable because they are used across every role dashboard.
+ */
 export type GlassTone = "primary" | "violet" | "sun" | "mint";
 
 export const TONE_CHIP: Record<GlassTone, string> = {
-  primary: "border-[#167894]/15 bg-[#167894]/10 text-[#0d617c]",
-  violet: "border-[#597ab3]/20 bg-[#597ab3]/10 text-[#456797]",
-  sun: "border-[#d49c4b]/25 bg-[#f1b75d]/15 text-[#9c691f]",
-  mint: "border-[#2d9a87]/20 bg-[#2d9a87]/12 text-[#177767]",
+  primary: "border-premium-sky/20 bg-premium-sky/10 text-premium-sky-deep",
+  violet: "border-premium-rose/20 bg-premium-rose/10 text-premium-rose-deep",
+  sun: "border-premium-gold/25 bg-premium-gold/15 text-premium-gold-deep",
+  mint: "border-premium-emerald/20 bg-premium-emerald/12 text-premium-emerald-deep",
 };
 
 export const TONE_BAR: Record<GlassTone, string> = {
-  primary: "bg-primary",
-  violet: "bg-violet",
-  sun: "bg-sun",
-  mint: "bg-mint",
+  primary: "bg-premium-sky",
+  violet: "bg-premium-rose",
+  sun: "bg-premium-gold",
+  mint: "bg-premium-emerald",
 };
 
 export function GlassCard({
@@ -62,8 +66,8 @@ export function TrendBadge({ trend, className }: { trend: Trend; className?: str
         aria-label={value === null ? "No comparison data" : `${text} change`}
         className={cn(
           "inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 font-semibold tabular-nums",
-          direction === "up" && "bg-mint/15 text-mint",
-          direction === "down" && "bg-destructive/10 text-destructive",
+          direction === "up" && "bg-premium-emerald/15 text-premium-emerald-deep",
+          direction === "down" && "bg-premium-rose/15 text-premium-rose-deep",
           direction === "flat" && "bg-muted/70 text-muted-foreground",
         )}
       >
