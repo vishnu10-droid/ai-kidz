@@ -28,6 +28,20 @@ export type BatchRow = {
   franchise_id?: { _id?: string; name?: string; city?: string } | null;
 };
 
+export type ClassRow = {
+  id: string;
+  name: string;
+  grade?: string | null;
+  section?: string | null;
+  schedule?: string | null;
+  room?: string | null;
+  status?: string;
+  studentCount?: number;
+  teacher_id?: { _id?: string; full_name?: string; email?: string } | null;
+  school_id?: { _id?: string; name?: string; city?: string } | null;
+  franchise_id?: { _id?: string; name?: string; city?: string } | null;
+};
+
 export type TeacherRow = {
   id: string;
   user_id?: string | null;
@@ -38,6 +52,7 @@ export type TeacherRow = {
   status?: string;
   hasLogin?: boolean;
   batches?: string[];
+  classes?: string[];
 };
 
 export type ParentRef = { _id?: string; full_name?: string; email?: string; phone?: string };
@@ -51,6 +66,7 @@ export type StudentRow = {
   status?: string;
   batch_id?: { _id?: string; name?: string; grade?: string } | null;
   batch?: { _id?: string; name?: string; grade?: string; schedule?: string } | null;
+  class_id?: { _id?: string; name?: string; grade?: string; section?: string } | null;
   parent_id?: ParentRef | null;
   school_id?: { _id?: string; name?: string } | null;
   franchise_id?: { _id?: string; name?: string } | null;
@@ -326,12 +342,14 @@ export type OrgOverview = {
     students: number;
     teachers: number;
     batches: number;
+    classes: number;
     attendanceRate: number;
     pendingFeesCount: number;
     pendingFeesAmount: number;
     collected: number;
   };
   batches: BatchRow[];
+  classes: ClassRow[];
   recentStudents: StudentRow[];
   upcomingBatches: BatchRow[];
 };

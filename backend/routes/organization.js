@@ -16,6 +16,12 @@ const organizationRoutes = (kind) => {
   router.delete("/batches/:id", controller.deleteBatch);
   router.get("/batches/:id/students", controller.batchStudents);
 
+  router.get("/classes", controller.listClasses);
+  router.post("/classes", controller.createClass);
+  router.patch("/classes/:id", controller.updateClass);
+  router.delete("/classes/:id", controller.deleteClass);
+  router.get("/classes/:id/students", controller.classStudents);
+
   router.get("/teachers", controller.listTeachers);
   router.post("/teachers", controller.createTeacher);
   router.patch("/teachers/:id", controller.updateTeacher);

@@ -5,6 +5,7 @@ const {
   School,
   Franchise,
   Batch,
+  Class,
   Teacher,
   Student,
   Parent,
@@ -33,6 +34,7 @@ exports.forOrganization = (kind) => {
   };
 
   const batchBelongsTo = async (org, batchId) => Batch.findOne({ _id: batchId, [ownerField]: org._id });
+  const classBelongsTo = async (org, classId) => Class.findOne({ _id: classId, [ownerField]: org._id });
 
   /* ------------------------------------------------------------- overview */
 
@@ -43,10 +45,11 @@ exports.forOrganization = (kind) => {
       const orgFilter = { [ownerField]: org._id };
       const monthAgo = new Date(Date.now() - 30 * 86_400_000);
 
-      const [students, teachers, batches, fees, attendance, recentStudents, upcoming] = await Promise.all([
+      const [students, teachers, batches, classes, fees, attendance, recentStudents, upcoming] = await Promise.all([
         Student.countDocuments({ ...orgFilter, status: "active" }),
         Teacher.countDocuments({ ...orgFilter, status: "active" }),
         Batch.find(orgFilter).populate("teacher_id", "full_name email").lean(),
+        Class.find(orgFilter).populate("teacher_id", "full_name email").lean(),
         FeeInvoice.find(orgFilter).lean(),
         AttendanceRecord.find({ batch_id: { $in: (await Batch.find(orgFilter).select("_id").lean()).map((b) => b._id) }, date: { $gte: monthAgo } }).lean(),
         Student.find(orgFilter).sort("-createdAt").limit(5).lean(),
@@ -63,12 +66,14 @@ exports.forOrganization = (kind) => {
           students,
           teachers,
           batches: batches.length,
+          classes: classes.length,
           attendanceRate: pct(present, attendance.length),
           pendingFeesCount: pendingFees.length,
           pendingFeesAmount: money(pendingFees.reduce((n, f) => n + Number(f.amount || 0), 0)),
           collected: money(paidFees.reduce((n, f) => n + Number(f.amount || 0), 0)),
         },
         batches: withIds(batches),
+        classes: withIds(classes),
         recentStudents: withIds(recentStudents),
         upcomingBatches: withIds(upcoming),
       });
@@ -156,6 +161,94 @@ exports.forOrganization = (kind) => {
     }
   };
 
+  /* -------------------------------------------------------------- classes */
+
+  const listClasses = async (req, res, next) => {
+    try {
+      const org = await requireOrg(req, res);
+      if (!org) return;
+      const classes = await Class.find({ [ownerField]: org._id }).populate("teacher_id", "full_name email").sort("-createdAt").lean();
+      const counts = await Student.aggregate([
+        { $match: { class_id: { $in: classes.map((item) => item._id) } } },
+        { $group: { _id: "$class_id", n: { $sum: 1 } } },
+      ]);
+      const map = new Map(counts.map((row) => [String(row._id), row.n]));
+      return res.json(withIds(classes).map((item) => ({ ...item, studentCount: map.get(String(item._id)) || 0 })));
+    } catch (error) {
+      return next(error);
+    }
+  };
+
+  const createClass = async (req, res, next) => {
+    try {
+      const org = await requireOrg(req, res);
+      if (!org) return;
+      const { name, grade, section, teacher_id, schedule, room, course_id } = req.body;
+      if (!name) return res.status(400).json({ message: "Class name is required" });
+      if (teacher_id) {
+        const teacher = await Teacher.findOne({ _id: teacher_id, [ownerField]: org._id });
+        if (!teacher) return res.status(400).json({ message: "Teacher does not belong to your organization" });
+      }
+      const created = await Class.create({
+        name,
+        grade,
+        section,
+        teacher_id: teacher_id || undefined,
+        schedule,
+        room,
+        course_id: course_id || undefined,
+        [ownerField]: org._id,
+      });
+      return res.status(201).json(withId(created.toObject()));
+    } catch (error) {
+      return next(error);
+    }
+  };
+
+  const updateClass = async (req, res, next) => {
+    try {
+      const org = await requireOrg(req, res);
+      if (!org) return;
+      const allowed = ["name", "grade", "section", "teacher_id", "schedule", "room", "status", "course_id"];
+      const update = Object.fromEntries(Object.entries(req.body).filter(([key]) => allowed.includes(key)));
+      if (update.teacher_id) {
+        const teacher = await Teacher.findOne({ _id: update.teacher_id, [ownerField]: org._id });
+        if (!teacher) return res.status(400).json({ message: "Teacher does not belong to your organization" });
+      }
+      const item = await Class.findOneAndUpdate({ _id: req.params.id, [ownerField]: org._id }, update, { new: true }).lean();
+      if (!item) return res.status(404).json({ message: "Class not found" });
+      return res.json(withId(item));
+    } catch (error) {
+      return next(error);
+    }
+  };
+
+  const deleteClass = async (req, res, next) => {
+    try {
+      const org = await requireOrg(req, res);
+      if (!org) return;
+      const item = await Class.findOneAndDelete({ _id: req.params.id, [ownerField]: org._id });
+      if (!item) return res.status(404).json({ message: "Class not found" });
+      await Student.updateMany({ class_id: item._id }, { $unset: { class_id: 1 } });
+      return res.json({ ok: true });
+    } catch (error) {
+      return next(error);
+    }
+  };
+
+  const classStudents = async (req, res, next) => {
+    try {
+      const org = await requireOrg(req, res);
+      if (!org) return;
+      const item = await classBelongsTo(org, req.params.id);
+      if (!item) return res.status(404).json({ message: "Class not found" });
+      const students = await Student.find({ class_id: item._id }).sort("full_name").lean();
+      return res.json(withIds(students));
+    } catch (error) {
+      return next(error);
+    }
+  };
+
   /* ------------------------------------------------------------- teachers */
 
   const listTeachers = async (req, res, next) => {
@@ -164,11 +257,13 @@ exports.forOrganization = (kind) => {
       if (!org) return;
       const teachers = await Teacher.find({ [ownerField]: org._id }).sort("-createdAt").lean();
       const batches = await Batch.find({ [ownerField]: org._id }).select("teacher_id name").lean();
+      const classes = await Class.find({ [ownerField]: org._id }).select("teacher_id name").lean();
       return res.json(
         withIds(teachers).map((teacher) => ({
           ...teacher,
           hasLogin: Boolean(teacher.user_id),
           batches: batches.filter((b) => String(b.teacher_id) === String(teacher._id)).map((b) => b.name),
+          classes: classes.filter((c) => String(c.teacher_id) === String(teacher._id)).map((c) => c.name),
         })),
       );
     } catch (error) {
@@ -265,7 +360,10 @@ exports.forOrganization = (kind) => {
       if (!org) return;
       const teacher = await Teacher.findOneAndDelete({ _id: req.params.id, [ownerField]: org._id });
       if (!teacher) return res.status(404).json({ message: "Teacher not found" });
-      await Batch.updateMany({ teacher_id: teacher._id }, { $unset: { teacher_id: 1 } });
+      await Promise.all([
+        Batch.updateMany({ teacher_id: teacher._id }, { $unset: { teacher_id: 1 } }),
+        Class.updateMany({ teacher_id: teacher._id }, { $unset: { teacher_id: 1 } }),
+      ]);
       return res.json({ ok: true });
     } catch (error) {
       return next(error);
@@ -280,8 +378,10 @@ exports.forOrganization = (kind) => {
       if (!org) return;
       const filter = { [ownerField]: org._id };
       if (req.query.batch_id && mongoose.isValidObjectId(req.query.batch_id)) filter.batch_id = req.query.batch_id;
+      if (req.query.class_id && mongoose.isValidObjectId(req.query.class_id)) filter.class_id = req.query.class_id;
       const students = await Student.find(filter)
         .populate("batch_id", "name grade")
+        .populate("class_id", "name grade section")
         .populate("parent_id", "full_name email phone")
         .sort("full_name")
         .lean();
@@ -309,11 +409,15 @@ exports.forOrganization = (kind) => {
     try {
       const org = await requireOrg(req, res);
       if (!org) return;
-      const { full_name, roll_number, batch_id, parent_email, email, grade } = req.body;
+      const { full_name, roll_number, batch_id, class_id, parent_email, email, grade } = req.body;
       if (!full_name) return res.status(400).json({ message: "Student name is required" });
       if (batch_id) {
         const batch = await batchBelongsTo(org, batch_id);
         if (!batch) return res.status(400).json({ message: "Batch does not belong to your organization" });
+      }
+      if (class_id) {
+        const item = await classBelongsTo(org, class_id);
+        if (!item) return res.status(400).json({ message: "Class does not belong to your organization" });
       }
       const parent = await resolveParent(parent_email);
       const student = await Student.create({
@@ -322,6 +426,7 @@ exports.forOrganization = (kind) => {
         email,
         grade,
         batch_id: batch_id || undefined,
+        class_id: class_id || undefined,
         parent_id: parent?._id,
         [ownerField]: org._id,
       });
@@ -343,11 +448,15 @@ exports.forOrganization = (kind) => {
     try {
       const org = await requireOrg(req, res);
       if (!org) return;
-      const allowed = ["full_name", "roll_number", "batch_id", "grade", "status", "email", "age"];
+      const allowed = ["full_name", "roll_number", "batch_id", "class_id", "grade", "status", "email", "age"];
       const update = Object.fromEntries(Object.entries(req.body).filter(([key]) => allowed.includes(key)));
       if (update.batch_id) {
         const batch = await batchBelongsTo(org, update.batch_id);
         if (!batch) return res.status(400).json({ message: "Batch does not belong to your organization" });
+      }
+      if (update.class_id) {
+        const item = await classBelongsTo(org, update.class_id);
+        if (!item) return res.status(400).json({ message: "Class does not belong to your organization" });
       }
       if (req.body.parent_email) {
         const parent = await resolveParent(req.body.parent_email);
@@ -355,6 +464,7 @@ exports.forOrganization = (kind) => {
       }
       const student = await Student.findOneAndUpdate({ _id: req.params.id, [ownerField]: org._id }, update, { new: true })
         .populate("batch_id", "name")
+        .populate("class_id", "name")
         .lean();
       if (!student) return res.status(404).json({ message: "Student not found" });
       return res.json(withId(student));
@@ -575,6 +685,11 @@ exports.forOrganization = (kind) => {
     updateBatch,
     deleteBatch,
     batchStudents,
+    listClasses,
+    createClass,
+    updateClass,
+    deleteClass,
+    classStudents,
     listTeachers,
     createTeacher,
     updateTeacher,

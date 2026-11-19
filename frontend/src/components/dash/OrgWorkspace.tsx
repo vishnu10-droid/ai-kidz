@@ -44,6 +44,7 @@ import {
 } from "@/lib/dash.api";
 import type {
   BatchRow,
+  ClassRow,
   EnquiryRow,
   FeeRow,
   FranchiseRow,
@@ -94,6 +95,7 @@ export function OrgWorkspace({ kind }: { kind: "school" | "franchise" }) {
 
   const overview = useQuery(dashQuery<OrgOverview>(["org", kind, "overview"], `${base}/overview`));
   const batches = useQuery(dashQuery<BatchRow[]>(["org", kind, "batches"], `${base}/batches`));
+  const classes = useQuery(dashQuery<ClassRow[]>(["org", kind, "classes"], `${base}/classes`));
   const teachers = useQuery(dashQuery<TeacherRow[]>(["org", kind, "teachers"], `${base}/teachers`));
   const students = useQuery(dashQuery<StudentRow[]>(["org", kind, "students"], `${base}/students`));
   const fees = useQuery(dashQuery<FeeRow[]>(["org", kind, "fees"], `${base}/fees`));
@@ -104,22 +106,29 @@ export function OrgWorkspace({ kind }: { kind: "school" | "franchise" }) {
   });
 
   const [batchForm, setBatchForm] = useState<BatchRow | "new" | null>(null);
+  const [classForm, setClassForm] = useState<ClassRow | "new" | null>(null);
   const [teacherOpen, setTeacherOpen] = useState(false);
   const [studentForm, setStudentForm] = useState<StudentRow | "new" | null>(null);
   const [feeOpen, setFeeOpen] = useState(false);
   const [viewBatch, setViewBatch] = useState<BatchRow | null>(null);
+  const [viewClass, setViewClass] = useState<ClassRow | null>(null);
   const [deleting, setDeleting] = useState<{
-    kind: "batch" | "teacher" | "student" | "fee";
+    kind: "batch" | "class" | "teacher" | "student" | "fee";
     id: string;
     label: string;
   } | null>(null);
 
   const batchEditing = batchForm && batchForm !== "new" ? batchForm : null;
+  const classEditing = classForm && classForm !== "new" ? classForm : null;
   const studentEditing = studentForm && studentForm !== "new" ? studentForm : null;
 
   const batchOptions = (batches.data ?? []).map((batch) => ({
     label: `${batch.name}${batch.grade ? ` · ${batch.grade}` : ""}`,
     value: batch.id,
+  }));
+  const classOptions = (classes.data ?? []).map((item) => ({
+    label: `${item.name}${item.grade ? ` · ${item.grade}` : ""}${item.section ? ` · ${item.section}` : ""}`,
+    value: item.id,
   }));
   const teacherOptions = (teachers.data ?? []).map((teacher) => ({
     label: teacher.full_name,
@@ -164,6 +173,14 @@ export function OrgWorkspace({ kind }: { kind: "school" | "franchise" }) {
     enabled: Boolean(viewBatch),
   });
 
+  const classStudents = useQuery({
+    ...dashQuery<StudentRow[]>(
+      ["org", kind, "class-students", viewClass?.id ?? ""],
+      `${base}/classes/${viewClass?.id ?? ""}/students`,
+    ),
+    enabled: Boolean(viewClass),
+  });
+
   /* --------------------------------------------------------------- helpers */
 
   async function run(action: () => Promise<unknown>, message: string) {
@@ -187,6 +204,21 @@ export function OrgWorkspace({ kind }: { kind: "school" | "franchise" }) {
     if (batchEditing) await patch(`${base}/batches/${batchEditing.id}`, body);
     else await post(`${base}/batches`, body);
     toast.success(batchEditing ? "Batch updated" : "Batch created");
+    refresh();
+  }
+
+  async function saveClass(values: Record<string, string>) {
+    const body = {
+      name: values["name"],
+      grade: values["grade"],
+      section: values["section"],
+      teacher_id: values["teacher_id"] || undefined,
+      schedule: values["schedule"],
+      room: values["room"],
+    };
+    if (classEditing) await patch(`${base}/classes/${classEditing.id}`, body);
+    else await post(`${base}/classes`, body);
+    toast.success(classEditing ? "Class updated" : "Class created");
     refresh();
   }
 
@@ -233,6 +265,7 @@ export function OrgWorkspace({ kind }: { kind: "school" | "franchise" }) {
       grade: values["grade"],
       email: values["email"] || undefined,
       batch_id: values["batch_id"] || undefined,
+      class_id: values["class_id"] || undefined,
       parent_email: values["parent_email"] || undefined,
     };
     if (studentEditing) await patch(`${base}/students/${studentEditing.id}`, body);
@@ -302,6 +335,7 @@ export function OrgWorkspace({ kind }: { kind: "school" | "franchise" }) {
     if (!deleting) return;
     const segments = {
       batch: "batches",
+      class: "classes",
       teacher: "teachers",
       student: "students",
       fee: "fees",
@@ -449,6 +483,59 @@ export function OrgWorkspace({ kind }: { kind: "school" | "franchise" }) {
     },
   ];
 
+  const classColumns = [
+    {
+      id: "name",
+      header: "Class",
+      cell: (item: ClassRow) => (
+        <div className="min-w-0">
+          <p className="truncate font-semibold">{item.name}</p>
+          <p className="text-xs text-muted-foreground">
+            {[item.grade, item.section].filter(Boolean).join(" · ") || "Grade not set"}
+          </p>
+        </div>
+      ),
+      sortValue: (item: ClassRow) => item.name,
+    },
+    {
+      id: "teacher",
+      header: "Teacher",
+      cell: (item: ClassRow) => (
+        <span className="text-sm">{item.teacher_id?.full_name ?? "Unassigned"}</span>
+      ),
+      sortValue: (item: ClassRow) => item.teacher_id?.full_name ?? "",
+    },
+    {
+      id: "schedule",
+      header: "Schedule",
+      cell: (item: ClassRow) => (
+        <span className="text-xs text-muted-foreground">
+          {[item.schedule, item.room].filter(Boolean).join(" · ") || "Not scheduled"}
+        </span>
+      ),
+    },
+    {
+      id: "students",
+      header: "Students",
+      align: "right" as const,
+      cell: (item: ClassRow) => (
+        <span className="font-semibold tabular-nums">{item.studentCount ?? 0}</span>
+      ),
+      sortValue: (item: ClassRow) => item.studentCount ?? 0,
+    },
+  ];
+
+  const classRowActions = (item: ClassRow): DataTableAction<ClassRow>[] => [
+    { label: "View students", icon: Users, onSelect: (row) => setViewClass(row) },
+    { label: "Edit class", icon: Pencil, onSelect: (row) => setClassForm(row) },
+    {
+      label: "Delete class",
+      icon: Trash2,
+      destructive: true,
+      onSelect: (row) => setDeleting({ kind: "class", id: row.id, label: row.name }),
+    },
+  ];
+
   const teacherColumns = [
     {
       id: "name",
@@ -473,6 +560,15 @@ export function OrgWorkspace({ kind }: { kind: "school" | "franchise" }) {
       cell: (teacher: TeacherRow) => (
         <span className="text-xs text-muted-foreground">
           {teacher.batches?.join(", ") || "No batches"}
+        </span>
+      ),
+    },
+    {
+      id: "classes",
+      header: "Classes",
+      cell: (teacher: TeacherRow) => (
+        <span className="text-xs text-muted-foreground">
+          {teacher.classes?.join(", ") || "No classes"}
         </span>
       ),
     },
@@ -523,6 +619,14 @@ export function OrgWorkspace({ kind }: { kind: "school" | "franchise" }) {
         <span className="text-sm">{student.batch_id?.name ?? "Unassigned"}</span>
       ),
       sortValue: (student: StudentRow) => student.batch_id?.name ?? "",
+    },
+    {
+      id: "class",
+      header: "Class",
+      cell: (student: StudentRow) => (
+        <span className="text-sm">{student.class_id?.name ?? "Unassigned"}</span>
+      ),
+      sortValue: (student: StudentRow) => student.class_id?.name ?? "",
     },
     {
       id: "parent",
@@ -584,6 +688,42 @@ export function OrgWorkspace({ kind }: { kind: "school" | "franchise" }) {
     { name: "room", label: "Room", defaultValue: batchEditing?.room ?? "", placeholder: "Lab 1" },
   ];
 
+  const classFields: FieldDef[] = [
+    {
+      name: "name",
+      label: "Class name",
+      required: true,
+      defaultValue: classEditing?.name ?? "",
+      placeholder: "Grade 6 · Section A",
+    },
+    {
+      name: "grade",
+      label: "Grade",
+      defaultValue: classEditing?.grade ?? "",
+      placeholder: "Grade 6",
+    },
+    {
+      name: "section",
+      label: "Section",
+      defaultValue: classEditing?.section ?? "",
+      placeholder: "A",
+    },
+    {
+      name: "teacher_id",
+      label: "Class teacher",
+      type: "select",
+      options: teacherOptions,
+      defaultValue: refId(classEditing?.teacher_id) ?? "",
+    },
+    {
+      name: "schedule",
+      label: "Schedule",
+      defaultValue: classEditing?.schedule ?? "",
+      placeholder: "Mon & Wed · 10:00 AM",
+    },
+    { name: "room", label: "Room", defaultValue: classEditing?.room ?? "", placeholder: "Lab 1" },
+  ];
+
   const studentFields: FieldDef[] = [
     {
       name: "full_name",
@@ -618,6 +758,13 @@ export function OrgWorkspace({ kind }: { kind: "school" | "franchise" }) {
       options: batchOptions,
       defaultValue: refId(studentEditing?.batch_id) ?? "",
     },
+    {
+      name: "class_id",
+      label: "Class",
+      type: "select",
+      options: classOptions,
+      defaultValue: refId(studentEditing?.class_id) ?? "",
+    },
   ];
 
   const revenueSeries = (revenue.data?.series ?? []).map((point) => ({
@@ -640,6 +787,7 @@ export function OrgWorkspace({ kind }: { kind: "school" | "franchise" }) {
             tabs={[
               { value: "overview", label: "Overview" },
               { value: "batches", label: isFranchise ? "Centre batches" : "Batches" },
+              { value: "classes", label: "Classes" },
               { value: "teachers", label: "Teachers" },
               { value: "students", label: "Students" },
               { value: "fees", label: "Fees & invoices" },
@@ -655,7 +803,7 @@ export function OrgWorkspace({ kind }: { kind: "school" | "franchise" }) {
 
           {/* ------------------------------------------------------- overview */}
           <TabsContent value="overview" className="space-y-6">
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
               <StatCard
                 label="Students"
                 value={kpis?.students ?? 0}
@@ -669,6 +817,12 @@ export function OrgWorkspace({ kind }: { kind: "school" | "franchise" }) {
                 tone="violet"
               />
               <StatCard label="Batches" value={kpis?.batches ?? 0} icon={BookOpen} tone="sun" />
+              <StatCard
+                label="Classes"
+                value={kpis?.classes ?? 0}
+                icon={GraduationCap}
+                tone="violet"
+              />
               <StatCard
                 label="Attendance"
                 value={`${kpis?.attendanceRate ?? 0}%`}
@@ -733,31 +887,62 @@ export function OrgWorkspace({ kind }: { kind: "school" | "franchise" }) {
               </Panel>
             </div>
 
-            <Panel title="Recently added students">
-              {students.isLoading ? (
-                <LoadingRows label="Loading students" />
-              ) : (overview.data?.recentStudents ?? []).length === 0 ? (
-                <EmptyState>No students yet.</EmptyState>
-              ) : (
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                  {(overview.data?.recentStudents ?? []).map((student) => (
-                    <div key={student.id} className="glass-tile rounded-2xl border p-4">
-                      <p className="font-semibold">{student.full_name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {student.roll_number ?? "No roll number"} ·{" "}
-                        {student.batch_id?.name ?? "Unassigned"}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </Panel>
+            <div className="grid gap-6 xl:grid-cols-[1fr_1.3fr]">
+              <Panel
+                title="Classes"
+                action={
+                  <Button variant="ghost" size="sm" onClick={() => setTab("classes")}>
+                    View all
+                  </Button>
+                }
+              >
+                {classes.isLoading ? (
+                  <LoadingRows label="Loading classes" />
+                ) : (classes.data ?? []).length === 0 ? (
+                  <EmptyState>No classes yet. Create your first class.</EmptyState>
+                ) : (
+                  <ul className="divide-y">
+                    {(classes.data ?? []).slice(0, 5).map((item) => (
+                      <li key={item.id} className="flex flex-wrap items-center gap-3 py-3 text-sm">
+                        <span className="min-w-0 flex-1 truncate font-semibold">{item.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {item.teacher_id?.full_name ?? "Unassigned"}
+                        </span>
+                        <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                          {item.studentCount ?? 0} students
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Panel>
+
+              <Panel title="Recently added students">
+                {students.isLoading ? (
+                  <LoadingRows label="Loading students" />
+                ) : (overview.data?.recentStudents ?? []).length === 0 ? (
+                  <EmptyState>No students yet.</EmptyState>
+                ) : (
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    {(overview.data?.recentStudents ?? []).map((student) => (
+                      <div key={student.id} className="glass-tile rounded-2xl border p-4">
+                        <p className="font-semibold">{student.full_name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {student.roll_number ?? "No roll number"} ·{" "}
+                          {student.batch_id?.name ?? "Unassigned"}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Panel>
+            </div>
           </TabsContent>
 
           {/* -------------------------------------------------------- batches */}
           <TabsContent value="batches">
             <Panel
-              title={isFranchise ? "Centre batches" : "Batches & classes"}
+              title={isFranchise ? "Centre batches" : "Batches"}
               description="Create a batch, assign a teacher and review enrolled students."
               action={
                 <Button variant="brand" size="sm" onClick={() => setBatchForm("new")}>
@@ -776,6 +961,38 @@ export function OrgWorkspace({ kind }: { kind: "school" | "franchise" }) {
                   searchPlaceholder="Search batches…"
                   empty="No batches yet — create one to get started."
                   actions={batchRowActions}
+                />
+              )}
+            </Panel>
+          </TabsContent>
+
+          {/* -------------------------------------------------------- classes */}
+          <TabsContent value="classes">
+            <Panel
+              title={isFranchise ? "Centre classes" : "Classes"}
+              description="Create a class, assign a teacher and review the students in it."
+              action={
+                <Button variant="brand" size="sm" onClick={() => setClassForm("new")}>
+                  <Plus className="size-4" /> New class
+                </Button>
+              }
+            >
+              {classes.isError ? (
+                <ErrorNote message="Could not load classes." />
+              ) : (
+                <DataTable
+                  rows={classes.data ?? []}
+                  columns={classColumns}
+                  rowKey={(item) => item.id}
+                  searchFields={(item) => [
+                    item.name,
+                    item.grade,
+                    item.section,
+                    item.teacher_id?.full_name,
+                  ]}
+                  searchPlaceholder="Search classes…"
+                  empty="No classes yet — create one to get started."
+                  actions={classRowActions}
                 />
               )}
             </Panel>
@@ -826,6 +1043,7 @@ export function OrgWorkspace({ kind }: { kind: "school" | "franchise" }) {
                   student.parent_id?.full_name,
                   student.parent_id?.email,
                   student.batch_id?.name,
+                  student.class_id?.name,
                 ]}
                 searchPlaceholder="Search students…"
                 empty="No students yet — quick add your first learner."
@@ -1130,6 +1348,16 @@ export function OrgWorkspace({ kind }: { kind: "school" | "franchise" }) {
       />
 
       <FormDialog
+        open={classForm !== null}
+        onOpenChange={(open) => setClassForm(open ? (classEditing ?? "new") : null)}
+        title={classEditing ? "Edit class" : "Create a class"}
+        description="Students can be assigned to this class from the Students tab."
+        fields={classFields}
+        submitLabel={classEditing ? "Save changes" : "Create class"}
+        onSubmit={saveClass}
+      />
+
+      <FormDialog
         open={teacherOpen}
         onOpenChange={setTeacherOpen}
         title="Add a teacher"
@@ -1207,6 +1435,31 @@ export function OrgWorkspace({ kind }: { kind: "school" | "franchise" }) {
         ) : (
           <ul className="divide-y">
             {(batchStudents.data ?? []).map((student) => (
+              <li key={student.id} className="flex items-center gap-3 py-3">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-semibold">{student.full_name}</p>
+                  <p className="text-xs text-muted-foreground">{student.roll_number ?? "—"}</p>
+                </div>
+                <StatusBadge value={student.status ?? "active"} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </InfoDialog>
+
+      <InfoDialog
+        open={Boolean(viewClass)}
+        onOpenChange={(open) => !open && setViewClass(null)}
+        title={viewClass?.name ?? "Class students"}
+        description={`${classStudents.data?.length ?? 0} students enrolled`}
+      >
+        {classStudents.isLoading ? (
+          <LoadingRows label="Loading students" />
+        ) : (classStudents.data ?? []).length === 0 ? (
+          <EmptyState>No students in this class yet.</EmptyState>
+        ) : (
+          <ul className="divide-y">
+            {(classStudents.data ?? []).map((student) => (
               <li key={student.id} className="flex items-center gap-3 py-3">
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold">{student.full_name}</p>

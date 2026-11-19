@@ -63,6 +63,7 @@ const Student = model("Student", {
   school_id: ref("School"),
   franchise_id: ref("Franchise"),
   batch_id: ref("Batch"),
+  class_id: ref("Class"),
   parent_id: ref("Parent"),
   full_name: { type: String, required: true },
   roll_number: String,
@@ -173,6 +174,19 @@ const StoreProduct = model("StoreProduct", {
 const Batch = model("Batch", {
   name: { type: String, required: true },
   grade: String,
+  school_id: ref("School"),
+  franchise_id: ref("Franchise"),
+  teacher_id: ref("Teacher"),
+  course_id: ref("Course"),
+  schedule: String,
+  room: String,
+  status: { type: String, enum: ["active", "archived"], default: "active" },
+});
+
+const Class = model("Class", {
+  name: { type: String, required: true },
+  grade: String,
+  section: String,
   school_id: ref("School"),
   franchise_id: ref("Franchise"),
   teacher_id: ref("Teacher"),
@@ -392,6 +406,7 @@ module.exports = {
   ProductCategory,
   StoreProduct,
   Batch,
+  Class,
   Enrollment,
   LessonProgress,
   AttendanceRecord,
